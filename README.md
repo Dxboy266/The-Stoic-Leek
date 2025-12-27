@@ -2,7 +2,9 @@
 
 一个帮助投资者通过健身任务管理情绪的 Web 应用。将投资盈亏转化为健身任务，用幽默且带有斯多葛哲学意味的方式平衡心理波动。
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://your-app-url.streamlit.app)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://the-stoic-leek.streamlit.app)
+[![GitHub](https://img.shields.io/github/license/Dxboy266/The-Stoic-Leek)](https://github.com/Dxboy266/The-Stoic-Leek/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/Dxboy266/The-Stoic-Leek)](https://github.com/Dxboy266/The-Stoic-Leek/stargazers)
 
 ## ✨ 特性
 
@@ -31,8 +33,8 @@
 
 1. **克隆仓库**
 ```bash
-git clone https://github.com/your-username/the-stoic-leek.git
-cd the-stoic-leek
+git clone https://github.com/Dxboy266/The-Stoic-Leek.git
+cd The-Stoic-Leek
 ```
 
 2. **安装依赖**
@@ -51,7 +53,7 @@ streamlit run app.py
 
 ### 在线体验
 
-访问 [在线演示](https://your-app-url.streamlit.app)（部署后更新此链接）
+访问 [在线演示](https://the-stoic-leek.streamlit.app)
 
 ## 📦 依赖
 
@@ -107,7 +109,7 @@ the-stoic-leek/
 
 ## 📧 联系方式
 
-如有问题或建议，请提交 [Issue](https://github.com/your-username/the-stoic-leek/issues)
+如有问题或建议，请提交 [Issue](https://github.com/Dxboy266/The-Stoic-Leek/issues)
 
 ---
 

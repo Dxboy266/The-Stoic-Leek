@@ -125,7 +125,7 @@ A: 不会。所有数据只在当前会话中存在，不会被上传或存储�
 
 ## 技术支持
 
-如有问题，请提交 [GitHub Issue](https://github.com/your-username/the-stoic-leek/issues)
+如有问题，请提交 [GitHub Issue](https://github.com/Dxboy266/The-Stoic-Leek/issues)
 
 ## 隐私说明
 

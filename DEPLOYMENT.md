@@ -26,7 +26,7 @@ git add .
 git commit -m "Initial commit"
 
 # 关联远程仓库
-git remote add origin https://github.com/your-username/the-stoic-leek.git
+git remote add origin https://github.com/Dxboy266/The-Stoic-Leek.git
 
 # 推送到 GitHub
 git push -u origin main
@@ -37,14 +37,14 @@ git push -u origin main
 1. 访问 [Streamlit Cloud](https://streamlit.io/cloud)
 2. 使用 GitHub 账号登录
 3. 点击 "New app"
-4. 选择您的仓库：`your-username/the-stoic-leek`
+4. 选择您的仓库：`Dxboy266/The-Stoic-Leek`
 5. 主文件路径：`app.py`
 6. 点击 "Deploy"
 
 ### 3. 等待部署完成
 
 - 首次部署需要 2-5 分钟
-- 部署完成后会获得一个 URL：`https://your-app-name.streamlit.app`
+- 部署完成后会获得一个 URL：`https://the-stoic-leek.streamlit.app`
 - 这个 URL 可以在任何设备上访问
 
 ### 4. 更新应用
