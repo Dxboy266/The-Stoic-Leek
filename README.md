@@ -4,27 +4,40 @@
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://stoic-leek.streamlit.app)
 [![GitHub](https://img.shields.io/github/license/Dxboy266/The-Stoic-Leek)](https://github.com/Dxboy266/The-Stoic-Leek/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/Dxboy266/The-Stoic-Leek)](https://github.com/Dxboy266/The-Stoic-Leek/stargazers)
 
 ## ✨ 特性
 
-- 🔐 **用户系统**：支持注册登录，数据云端同步
-- 🤖 **AI 驱动建议**：使用大语言模型生成个性化的运动处方
-- 💪 **动作池管理**：自定义健身动作，AI 从中智能推荐
-- 😌 **情绪识别**：根据盈亏金额自动判断心情状态
-- 📱 **响应式设计**：完美支持 PC 和移动设备
+- 🔐 **用户系统**：支持注册登录，会话自动保持
+- 🤖 **AI 驱动**：斯多葛风格的毒舌健身教练
+- 💪 **动作池管理**：自定义健身动作
 - ☁️ **云端存储**：基于 Supabase，数据安全持久化
 
 ## 🎯 工作原理
 
-1. **注册/登录**：创建账户，数据云端同步
-2. **输入盈亏金额**：正数表示盈利，负数表示亏损
-3. **AI 分析心情**：
-   - 10元以下 → 平淡 → 休息
-   - 10-100元 → 平淡 → 轻运动
-   - 100-1000元 → 适量运动
-   - 1000元+ → 需要运动（多动作组合）
-4. **生成运动处方**：从你的动作池中智能推荐
+1. **登录账户** → 数据云端同步
+2. **输入盈亏** → AI 分析心情
+3. **生成处方** → 运动 + 毒舌建议
+
+## 📁 项目结构
+
+```
+the-stoic-leek/
+├── app.py                   # 主应用入口
+├── config/                  # 配置（纯数据）
+│   ├── __init__.py          # 配置加载器
+│   ├── config.yaml          # 动作池 + 模型配置
+│   └── prompt.txt           # AI Prompt
+├── core/                    # 核心逻辑
+│   ├── __init__.py
+│   ├── ai.py                # AI 调用
+│   ├── auth.py              # 用户认证
+│   └── db.py                # 数据库操作
+├── .streamlit/
+│   ├── config.toml          # Streamlit 配置
+│   └── secrets.toml         # 密钥配置（不提交）
+├── requirements.txt         # Python 依赖
+└── README.md
+```
 
 ## 🚀 快速开始
 
@@ -79,36 +92,18 @@ streamlit run app.py
 - **后端**：Python
 - **数据库**：Supabase (PostgreSQL)
 - **认证**：Supabase Auth
-- **AI**：硅基流动 API (DeepSeek/Qwen)
-
-## 📁 项目结构
-
-```
-the-stoic-leek/
-├── .streamlit/
-│   ├── config.toml          # Streamlit 配置
-│   └── secrets.toml         # 密钥配置（不提交）
-├── app.py                   # 主应用程序
-├── requirements.txt         # Python 依赖
-├── README.md                # 项目说明
-├── LICENSE                  # MIT 许可证
-└── .gitignore               # Git 忽略配置
-```
-
-## 🤝 贡献
-
-欢迎贡献！请随时提交 Issue 或 Pull Request。
+- **AI**：硅基流动 API
 
 ## 📝 许可证
 
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+MIT License
 
 ## 🙏 致谢
 
-- [Streamlit](https://streamlit.io/) - Python Web 框架
-- [Supabase](https://supabase.com/) - 开源 Firebase 替代
-- [硅基流动](https://siliconflow.cn) - 免费 AI API 服务
+- [Streamlit](https://streamlit.io/)
+- [Supabase](https://supabase.com/)
+- [硅基流动](https://siliconflow.cn)
 
 ---
 
-**免责声明**：本应用仅供娱乐和情绪管理参考，不构成任何投资建议。投资有风险，入市需谨慎。
+**免责声明**：本应用仅供娱乐和情绪管理参考，不构成任何投资建议。

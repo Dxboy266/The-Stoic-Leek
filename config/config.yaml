@@ -1,0 +1,44 @@
+# 动作池配置
+exercises:
+  - 深蹲
+  - 俯卧撑
+  - 卷腹
+  - 高抬腿
+  - 波比跳
+  - 开合跳
+  - 平板支撑
+  - 拉伸
+  - 靠墙静蹲
+  - 仰卧起坐
+  - 跳绳
+  - 原地跑
+
+# AI 模型配置
+models:
+  DeepSeek-V3 (免费): deepseek-ai/DeepSeek-V3
+  DeepSeek-V2.5 (免费): deepseek-ai/DeepSeek-V2.5
+  Qwen2.5-7B (免费): Qwen/Qwen2.5-7B-Instruct
+  Qwen2.5-72B (免费): Qwen/Qwen2.5-72B-Instruct
+
+# 默认模型
+default_model: deepseek-ai/DeepSeek-V3
+default_model_name: DeepSeek-V3 (免费)
+
+# API 配置
+api:
+  url: https://api.siliconflow.cn/v1/chat/completions
+  timeout: 15
+  temperature: 0.6
+
+# 心情关键词
+mood_keywords:
+  - 上头
+  - 膨胀
+  - 装死
+  - 幻觉
+  - 麻木
+  - 恐惧
+  - 贪婪
+  - 崩溃
+  - 狂欢
+  - 平静
