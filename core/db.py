@@ -1,27 +1,41 @@
 """
-数据库模块 - 处理 Supabase 数据存储
+数据库模块 - 处理 Supabase 数据存储（懒加载）
 """
 
 import streamlit as st
 import os
-from supabase import create_client, Client
-from config import DEFAULT_EXERCISES, DEFAULT_MODEL, DEFAULT_MODEL_NAME
 
-# Supabase 配置
-SUPABASE_URL = os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY", "")
+# 延迟导入，避免启动时加载 supabase
+_supabase_client = None
 
 
-@st.cache_resource
-def get_supabase() -> Client | None:
-    """获取 Supabase 客户端（单例）"""
-    if SUPABASE_URL and SUPABASE_KEY:
-        return create_client(SUPABASE_URL, SUPABASE_KEY)
+def get_supabase():
+    """获取 Supabase 客户端（懒加载单例）"""
+    global _supabase_client
+    
+    if _supabase_client is not None:
+        return _supabase_client
+    
+    url = os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL", "")
+    key = os.environ.get("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY", "")
+    
+    if url and key:
+        from supabase import create_client
+        _supabase_client = create_client(url, key)
+        return _supabase_client
+    
     return None
+
+
+def _get_defaults():
+    """获取默认配置（懒加载）"""
+    from config import DEFAULT_EXERCISES, DEFAULT_MODEL, DEFAULT_MODEL_NAME
+    return DEFAULT_EXERCISES, DEFAULT_MODEL, DEFAULT_MODEL_NAME
 
 
 def load_user_data(user_id: str):
     """从数据库加载用户数据"""
+    DEFAULT_EXERCISES, DEFAULT_MODEL, DEFAULT_MODEL_NAME = _get_defaults()
     supabase = get_supabase()
     
     # 设置默认值
@@ -29,7 +43,7 @@ def load_user_data(user_id: str):
     st.session_state.setdefault('model', DEFAULT_MODEL)
     st.session_state.setdefault('model_name', DEFAULT_MODEL_NAME)
     st.session_state.setdefault('api_key', "")
-    st.session_state.setdefault('total_assets', None)  # 本金无默认值
+    st.session_state.setdefault('total_assets', None)
     st.session_state.setdefault('page', 'home')
     
     if not supabase or not user_id:
@@ -55,7 +69,9 @@ def load_user_data(user_id: str):
 
 def save_user_data(user_id: str) -> bool:
     """保存用户数据到数据库"""
+    DEFAULT_EXERCISES, DEFAULT_MODEL, DEFAULT_MODEL_NAME = _get_defaults()
     supabase = get_supabase()
+    
     if not supabase or not user_id:
         return False
     

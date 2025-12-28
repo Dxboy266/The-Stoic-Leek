@@ -4,7 +4,7 @@
 """
 
 import streamlit as st
-from core import get_user, sign_in, sign_out, sign_up, try_restore_session
+from core import get_user, sign_in, sign_out, sign_up
 from core import get_supabase, load_user_data, save_user_data, call_ai
 from config import DEFAULT_EXERCISES, MODELS
 
@@ -51,54 +51,107 @@ header { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ========== 初始化 ==========
-supabase = get_supabase()
-user = try_restore_session(supabase)
+# ========== 初始化（懒加载）==========
+def _get_supabase():
+    """懒加载 Supabase"""
+    if 'supabase' not in st.session_state:
+        st.session_state['supabase'] = get_supabase()
+    return st.session_state['supabase']
+
+user = st.session_state.get('user')
 
 # ========== 页面组件 ==========
 def show_auth_page():
     """登录/注册页面"""
     st.markdown('''<div class="header"><span class="app-icon">🌱</span><h1>《韭菜的自我修养》</h1><p class="subtitle">THE STOIC LEEK</p></div>''', unsafe_allow_html=True)
     
-    if not supabase:
-        st.error("数据库未配置")
-        return
-    
     tab1, tab2 = st.tabs(["登录", "注册"])
     
     with tab1:
-        with st.form("login_form"):
-            email = st.text_input("邮箱", key="login_email")
-            password = st.text_input("密码", type="password", key="login_pwd")
-            if st.form_submit_button("登录", use_container_width=True):
-                if email and password:
+        email = st.text_input("邮箱", key="login_email")
+        password = st.text_input("密码", type="password", key="login_pwd")
+        
+        is_loading = st.session_state.get('login_loading', False)
+        
+        if st.button(
+            "登录中..." if is_loading else "登录",
+            use_container_width=True,
+            disabled=is_loading,
+            key="login_btn"
+        ):
+            if email and password:
+                st.session_state['login_loading'] = True
+                st.session_state['login_data'] = (email, password)
+                st.rerun()
+            else:
+                st.warning("请填写邮箱和密码")
+        
+        # 执行登录
+        if is_loading and 'login_data' in st.session_state:
+            email, password = st.session_state['login_data']
+            try:
+                supabase = _get_supabase()
+                if not supabase:
+                    st.error("数据库未配置")
+                else:
                     ok, msg = sign_in(supabase, email, password)
                     if ok:
-                        st.success(msg)
+                        st.session_state['login_loading'] = False
+                        if 'login_data' in st.session_state:
+                            del st.session_state['login_data']
                         st.rerun()
                     else:
                         st.error(msg)
-                else:
-                    st.warning("请填写邮箱和密码")
+            except Exception as e:
+                st.error(f"连接失败：{str(e)}")
+            # 无论成功失败都重置状态
+            st.session_state['login_loading'] = False
+            if 'login_data' in st.session_state:
+                del st.session_state['login_data']
     
     with tab2:
-        with st.form("register_form"):
-            email = st.text_input("邮箱", key="reg_email")
-            password = st.text_input("密码（至少6位）", type="password", key="reg_pwd")
-            password2 = st.text_input("确认密码", type="password", key="reg_pwd2")
-            if st.form_submit_button("注册", use_container_width=True):
-                if not email or not password:
-                    st.warning("请填写邮箱和密码")
-                elif len(password) < 6:
-                    st.warning("密码至少6位")
-                elif password != password2:
-                    st.warning("两次密码不一致")
+        email2 = st.text_input("邮箱", key="reg_email")
+        password2 = st.text_input("密码（至少6位）", type="password", key="reg_pwd")
+        password3 = st.text_input("确认密码", type="password", key="reg_pwd2")
+        
+        is_reg_loading = st.session_state.get('reg_loading', False)
+        
+        if st.button(
+            "注册中..." if is_reg_loading else "注册",
+            use_container_width=True,
+            disabled=is_reg_loading,
+            key="reg_btn"
+        ):
+            if not email2 or not password2:
+                st.warning("请填写邮箱和密码")
+            elif len(password2) < 6:
+                st.warning("密码至少6位")
+            elif password2 != password3:
+                st.warning("两次密码不一致")
+            else:
+                st.session_state['reg_loading'] = True
+                st.session_state['reg_data'] = (email2, password2)
+                st.rerun()
+        
+        # 执行注册
+        if is_reg_loading and 'reg_data' in st.session_state:
+            email2, password2 = st.session_state['reg_data']
+            try:
+                supabase = _get_supabase()
+                if not supabase:
+                    st.error("数据库未配置")
                 else:
-                    ok, msg = sign_up(supabase, email, password)
+                    ok, msg = sign_up(supabase, email2, password2)
                     if ok:
                         st.success(msg)
                     else:
                         st.error(msg)
+            except Exception as e:
+                st.error(f"连接失败：{str(e)}")
+            # 无论成功失败都重置状态
+            st.session_state['reg_loading'] = False
+            if 'reg_data' in st.session_state:
+                del st.session_state['reg_data']
 
 
 def show_home_page(user):
@@ -139,9 +192,14 @@ def show_home_page(user):
     
     # 按钮逻辑
     has_result = 'result' in st.session_state
-    btn_label = "重新生成" if has_result else "生成处方"
+    is_generating = st.session_state.get('generating', False)
     
-    if st.button(btn_label, use_container_width=True):
+    if has_result:
+        btn_label = "重新生成中..." if is_generating else "重新生成"
+    else:
+        btn_label = "生成中..." if is_generating else "生成处方"
+    
+    if st.button(btn_label, use_container_width=True, disabled=is_generating):
         if not total_assets:
             st.warning("请先输入本金")
         elif amount is None:
@@ -149,25 +207,34 @@ def show_home_page(user):
         elif not st.session_state.get('api_key'):
             st.info("请先配置 API 密钥")
         else:
-            with st.spinner("AI 分析中..."):
-                try:
-                    result = call_ai(
-                        st.session_state['api_key'],
-                        st.session_state['model'],
-                        amount,
-                        total_assets,
-                        st.session_state['exercises']
-                    )
-                    roi = (amount / total_assets) * 100 if total_assets > 0 else 0
-                    st.session_state['result'] = {
-                        'amount': amount,
-                        'total_assets': total_assets,
-                        'roi': roi,
-                        **result
-                    }
-                    st.rerun()
-                except Exception as e:
-                    st.error(str(e))
+            st.session_state['generating'] = True
+            st.session_state['gen_data'] = (amount, total_assets)
+            st.rerun()
+    
+    # 执行生成
+    if is_generating and 'gen_data' in st.session_state:
+        amount, total_assets = st.session_state['gen_data']
+        try:
+            result = call_ai(
+                st.session_state['api_key'],
+                st.session_state['model'],
+                amount,
+                total_assets,
+                st.session_state['exercises']
+            )
+            roi = (amount / total_assets) * 100 if total_assets > 0 else 0
+            st.session_state['result'] = {
+                'amount': amount,
+                'total_assets': total_assets,
+                'roi': roi,
+                **result
+            }
+        except Exception as e:
+            st.error(str(e))
+        st.session_state['generating'] = False
+        if 'gen_data' in st.session_state:
+            del st.session_state['gen_data']
+        st.rerun()
     
     if has_result:
         r = st.session_state['result']
@@ -291,7 +358,7 @@ def show_settings_page(user):
     st.markdown("### 账户")
     st.info(f"当前账户：{user['email']}")
     if st.button("退出登录", use_container_width=True):
-        sign_out(supabase)
+        sign_out(_get_supabase())
         st.rerun()
     
     # 关于
