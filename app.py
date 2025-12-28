@@ -19,7 +19,7 @@ MODELS = {
 
 st.set_page_config(page_title="韭菜的自我修养", page_icon="🌱", layout="centered", initial_sidebar_state="collapsed")
 
-# Supabase 配置 - 从环境变量或 secrets 读取
+# Supabase 配置
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL", "")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY", "")
 
@@ -31,8 +31,48 @@ def get_supabase() -> Client:
 
 supabase = get_supabase()
 
+# ========== 用户认证 ==========
+def get_user():
+    return st.session_state.get('user')
+
+def sign_up(email, password):
+    try:
+        resp = supabase.auth.sign_up({"email": email, "password": password})
+        if resp.user:
+            return True, "注册成功！请查收验证邮件"
+        return False, "注册失败"
+    except Exception as e:
+        msg = str(e)
+        if "already registered" in msg:
+            return False, "该邮箱已注册"
+        return False, msg
+
+def sign_in(email, password):
+    try:
+        resp = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        if resp.user:
+            st.session_state['user'] = {"id": resp.user.id, "email": resp.user.email}
+            st.session_state['data_loaded'] = False  # 重新加载数据
+            return True, "登录成功"
+        return False, "登录失败"
+    except Exception as e:
+        msg = str(e)
+        if "Invalid login" in msg:
+            return False, "邮箱或密码错误"
+        if "Email not confirmed" in msg:
+            return False, "请先验证邮箱"
+        return False, msg
+
+def sign_out():
+    try:
+        supabase.auth.sign_out()
+    except:
+        pass
+    st.session_state.clear()
+
+# ========== 数据存储 ==========
 def load_data():
-    if 'data_loaded' in st.session_state:
+    if 'data_loaded' in st.session_state and st.session_state['data_loaded']:
         return
     
     # 默认值
@@ -41,10 +81,10 @@ def load_data():
     st.session_state['model_name'] = "DeepSeek-V3 (免费)"
     st.session_state['api_key'] = ""
     
-    # 从 Supabase 加载
-    if supabase:
+    user = get_user()
+    if supabase and user:
         try:
-            resp = supabase.table("user_settings").select("*").eq("id", "default").execute()
+            resp = supabase.table("user_settings").select("*").eq("id", user['id']).execute()
             if resp.data and len(resp.data) > 0:
                 data = resp.data[0]
                 if data.get('exercises'):
@@ -62,14 +102,13 @@ def load_data():
         st.session_state['page'] = 'home'
     st.session_state['data_loaded'] = True
 
-load_data()
-
 def save_to_db():
-    if not supabase:
+    user = get_user()
+    if not supabase or not user:
         return False
     try:
         supabase.table("user_settings").upsert({
-            "id": "default",
+            "id": user['id'],
             "api_key": st.session_state.get('api_key', ''),
             "exercises": st.session_state.get('exercises', DEFAULT_EXERCISES),
             "model": st.session_state.get('model', 'deepseek-ai/DeepSeek-V3'),
@@ -149,171 +188,218 @@ header { display: none !important; }
 .stats { display: flex; justify-content: center; gap: 2rem; padding: 1rem; background: #f8fafc; border-radius: 12px; margin: 1rem 0; }
 .stat-value { font-size: 1.5rem; font-weight: 700; color: #8b5cf6; }
 .stat-label { font-size: 0.75rem; color: #64748b; }
-.save-hint { background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 0.75rem; font-size: 0.875rem; color: #065f46; text-align: center; margin: 1rem 0; }
-.db-status { padding: 8px 12px; border-radius: 8px; font-size: 13px; margin: 8px 0; }
-.db-ok { background: #d1fae5; color: #065f46; }
-.db-err { background: #fee2e2; color: #991b1b; }
+.user-bar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 8px 0; font-size: 14px; color: #64748b; }
+.auth-box { max-width: 360px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+.auth-title { font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 1.5rem; color: #1e293b; }
 @media (max-width: 768px) { .block-container { max-width: 100% !important; padding: 1rem !important; min-width: unset !important; } .result-grid { grid-template-columns: 1fr; } }
 </style>
 """, unsafe_allow_html=True)
 
-# 导航
-page = st.session_state.get('page', 'home')
-c1, c2, c3 = st.columns(3)
-with c1:
-    if st.button("🏠 首页", use_container_width=True, type="primary" if page == 'home' else "secondary"):
-        st.session_state['page'] = 'home'
-        st.rerun()
-with c2:
-    if st.button("💪 动作池", use_container_width=True, type="primary" if page == 'exercises' else "secondary"):
-        st.session_state['page'] = 'exercises'
-        st.rerun()
-with c3:
-    if st.button("⚙️ 设置", use_container_width=True, type="primary" if page == 'settings' else "secondary"):
-        st.session_state['page'] = 'settings'
-        st.rerun()
-
-
-# 首页
-if st.session_state['page'] == 'home':
-    st.markdown('''<div class="header"><span class="app-icon">🌱</span><h1>《韭菜的自我修养》</h1><p class="subtitle">THE STOIC LEEK</p><p class="desc">通过"对冲焦虑的肉体惩罚/奖励机制"帮助投资者管理情绪。将投资盈亏转化为健身任务，用幽默且带有斯多葛哲学意味的方式平衡心理波动。</p></div>''', unsafe_allow_html=True)
+# ========== 登录页面 ==========
+def show_auth_page():
+    st.markdown('''<div class="header"><span class="app-icon">🌱</span><h1>《韭菜的自我修养》</h1><p class="subtitle">THE STOIC LEEK</p></div>''', unsafe_allow_html=True)
     
     if not supabase:
-        st.warning("数据库未配置，数据不会持久化")
+        st.error("数据库未配置")
+        return
     
-    if not st.session_state.get('api_key'):
-        st.warning("请先前往「设置」页面配置 API 密钥")
+    tab1, tab2 = st.tabs(["登录", "注册"])
     
-    st.markdown('<div class="section-title">📊 输入今日投资情况</div>', unsafe_allow_html=True)
-    amount = st.number_input("盈亏金额（元）", value=None, step=100.0, placeholder="请输入金额")
+    with tab1:
+        with st.form("login_form"):
+            email = st.text_input("邮箱", key="login_email")
+            password = st.text_input("密码", type="password", key="login_pwd")
+            if st.form_submit_button("登录", use_container_width=True):
+                if email and password:
+                    ok, msg = sign_in(email, password)
+                    if ok:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+                else:
+                    st.warning("请填写邮箱和密码")
     
-    if st.button("生成处方", use_container_width=True):
-        if amount is None:
-            st.warning("请先输入金额")
-        elif not st.session_state.get('api_key'):
-            st.info("请先配置 API 密钥")
-        else:
-            with st.spinner("AI 分析中..."):
-                try:
-                    result = call_ai(st.session_state['api_key'], st.session_state['model'], amount, st.session_state['exercises'])
-                    st.session_state['result'] = {'amount': amount, **result}
-                except Exception as e:
-                    st.error(str(e))
-    
-    if 'result' in st.session_state:
-        r = st.session_state['result']
-        amt = r['amount']
-        color = "green" if amt > 0 else ("red" if amt < 0 else "")
-        amt_str = f"+¥{amt:.2f}" if amt > 0 else (f"-¥{abs(amt):.2f}" if amt < 0 else "¥0.00")
-        st.markdown(f'''<div class="result-card"><div class="result-grid"><div class="result-item"><div class="result-value {color}">{amt_str}</div><div class="result-label">今日盈亏</div></div><div class="result-item"><div class="result-value">{r['mood']}</div><div class="result-label">心情状态</div></div><div class="result-item"><div class="result-value">{r['exercise']}</div><div class="result-label">运动建议</div></div></div><div class="advice-box"><div class="advice-title">🧠 AI 建议</div><div class="advice-text">{r['advice']}</div></div></div>''', unsafe_allow_html=True)
-        
-        if st.button("重新生成", use_container_width=True):
-            try:
-                result = call_ai(st.session_state['api_key'], st.session_state['model'], amt, st.session_state['exercises'])
-                st.session_state['result'] = {'amount': amt, **result}
-                st.rerun()
-            except Exception as e:
-                st.error(str(e))
-    
-    st.markdown('<div class="footer">保持理性 · 保持运动 · 保持韭菜的自我修养</div>', unsafe_allow_html=True)
+    with tab2:
+        with st.form("register_form"):
+            email = st.text_input("邮箱", key="reg_email")
+            password = st.text_input("密码（至少6位）", type="password", key="reg_pwd")
+            password2 = st.text_input("确认密码", type="password", key="reg_pwd2")
+            if st.form_submit_button("注册", use_container_width=True):
+                if not email or not password:
+                    st.warning("请填写邮箱和密码")
+                elif len(password) < 6:
+                    st.warning("密码至少6位")
+                elif password != password2:
+                    st.warning("两次密码不一致")
+                else:
+                    ok, msg = sign_up(email, password)
+                    if ok:
+                        st.success(msg)
+                    else:
+                        st.error(msg)
 
-# 动作池
-elif st.session_state['page'] == 'exercises':
-    st.markdown('<div class="page-title">💪 动作池管理</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-desc">自定义健身动作，AI 将从中推荐</div>', unsafe_allow_html=True)
+# ========== 主应用 ==========
+user = get_user()
+
+if not user:
+    show_auth_page()
+else:
+    load_data()
     
-    exercises = st.session_state.get('exercises', DEFAULT_EXERCISES)
-    st.markdown(f'<div class="stats"><div><div class="stat-value">{len(exercises)}</div><div class="stat-label">当前动作</div></div><div><div class="stat-value">{len(DEFAULT_EXERCISES)}</div><div class="stat-label">默认动作</div></div></div>', unsafe_allow_html=True)
-    
-    st.markdown("### 当前动作池")
-    if exercises:
-        chips = ''.join([f'<span class="exercise-chip">{ex}</span>' for ex in exercises])
-        st.markdown(f'<div style="margin:12px 0">{chips}</div>', unsafe_allow_html=True)
-        to_del = st.selectbox("删除动作", [""] + exercises, format_func=lambda x: "选择要删除的动作" if x == "" else f"× {x}")
-        if to_del:
-            st.session_state['exercises'].remove(to_del)
-            save_to_db()
+    # 用户栏
+    col1, col2 = st.columns([4, 1])
+    with col2:
+        if st.button(f"退出 ({user['email'][:10]}...)", use_container_width=True):
+            sign_out()
             st.rerun()
-    else:
-        st.info("动作池为空")
     
-    st.markdown("---")
-    st.markdown("### 添加动作")
-    new_ex = st.text_input("动作名称", placeholder="如：引体向上")
-    if st.button("添加", use_container_width=True):
-        if new_ex and new_ex.strip():
-            if new_ex.strip() not in st.session_state['exercises']:
-                st.session_state['exercises'].append(new_ex.strip())
-                save_to_db()
-                st.rerun()
-            else:
-                st.warning("已存在")
-    
-    st.markdown("---")
-    c1, c2 = st.columns(2)
+    # 导航
+    page = st.session_state.get('page', 'home')
+    c1, c2, c3 = st.columns(3)
     with c1:
-        if st.button("恢复默认", use_container_width=True):
-            st.session_state['exercises'] = DEFAULT_EXERCISES.copy()
-            save_to_db()
+        if st.button("🏠 首页", use_container_width=True, type="primary" if page == 'home' else "secondary"):
+            st.session_state['page'] = 'home'
             st.rerun()
     with c2:
-        if st.button("清空", use_container_width=True):
-            st.session_state['exercises'] = []
-            save_to_db()
+        if st.button("💪 动作池", use_container_width=True, type="primary" if page == 'exercises' else "secondary"):
+            st.session_state['page'] = 'exercises'
+            st.rerun()
+    with c3:
+        if st.button("⚙️ 设置", use_container_width=True, type="primary" if page == 'settings' else "secondary"):
+            st.session_state['page'] = 'settings'
             st.rerun()
 
-# 设置
-elif st.session_state['page'] == 'settings':
-    st.markdown('<div class="page-title">⚙️ 设置</div>', unsafe_allow_html=True)
-    
-    # 数据库状态
-    if supabase:
-        st.markdown('<div class="db-status db-ok">✅ 数据库已连接</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="db-status db-err">⚠️ 数据库未配置</div>', unsafe_allow_html=True)
-        st.info("请在 Streamlit Cloud 的 Secrets 中配置 SUPABASE_URL 和 SUPABASE_KEY")
-    
-    if st.session_state.get('db_error'):
-        st.error(f"数据库错误: {st.session_state['db_error']}")
-    
-    st.markdown("### API 密钥")
-    st.info("[硅基流动](https://siliconflow.cn) 注册获取免费密钥")
-    
-    current_key = st.session_state.get('api_key', '')
-    
-    if current_key and not st.session_state.get('show_key'):
-        st.success(f"✅ 已配置（{current_key[:8]}...）")
-        if st.button("更换密钥"):
-            st.session_state['show_key'] = True
-            st.rerun()
-    else:
-        new_key = st.text_input("API 密钥", type="password", value="" if st.session_state.get('show_key') else current_key)
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("保存密钥", use_container_width=True):
-                if new_key and new_key.strip():
-                    st.session_state['api_key'] = new_key.strip()
+    # 首页
+    if st.session_state['page'] == 'home':
+        st.markdown('''<div class="header"><span class="app-icon">🌱</span><h1>《韭菜的自我修养》</h1><p class="subtitle">THE STOIC LEEK</p><p class="desc">通过"对冲焦虑的肉体惩罚/奖励机制"帮助投资者管理情绪。将投资盈亏转化为健身任务，用幽默且带有斯多葛哲学意味的方式平衡心理波动。</p></div>''', unsafe_allow_html=True)
+        
+        if not st.session_state.get('api_key'):
+            st.warning("请先前往「设置」页面配置 API 密钥")
+        
+        st.markdown('<div class="section-title">📊 输入今日投资情况</div>', unsafe_allow_html=True)
+        amount = st.number_input("盈亏金额（元）", value=None, step=100.0, placeholder="请输入金额")
+        
+        if st.button("生成处方", use_container_width=True):
+            if amount is None:
+                st.warning("请先输入金额")
+            elif not st.session_state.get('api_key'):
+                st.info("请先配置 API 密钥")
+            else:
+                with st.spinner("AI 分析中..."):
+                    try:
+                        result = call_ai(st.session_state['api_key'], st.session_state['model'], amount, st.session_state['exercises'])
+                        st.session_state['result'] = {'amount': amount, **result}
+                    except Exception as e:
+                        st.error(str(e))
+        
+        if 'result' in st.session_state:
+            r = st.session_state['result']
+            amt = r['amount']
+            color = "green" if amt > 0 else ("red" if amt < 0 else "")
+            amt_str = f"+¥{amt:.2f}" if amt > 0 else (f"-¥{abs(amt):.2f}" if amt < 0 else "¥0.00")
+            st.markdown(f'''<div class="result-card"><div class="result-grid"><div class="result-item"><div class="result-value {color}">{amt_str}</div><div class="result-label">今日盈亏</div></div><div class="result-item"><div class="result-value">{r['mood']}</div><div class="result-label">心情状态</div></div><div class="result-item"><div class="result-value">{r['exercise']}</div><div class="result-label">运动建议</div></div></div><div class="advice-box"><div class="advice-title">🧠 AI 建议</div><div class="advice-text">{r['advice']}</div></div></div>''', unsafe_allow_html=True)
+            
+            if st.button("重新生成", use_container_width=True):
+                try:
+                    result = call_ai(st.session_state['api_key'], st.session_state['model'], amt, st.session_state['exercises'])
+                    st.session_state['result'] = {'amount': amt, **result}
+                    st.rerun()
+                except Exception as e:
+                    st.error(str(e))
+        
+        st.markdown('<div class="footer">保持理性 · 保持运动 · 保持韭菜的自我修养</div>', unsafe_allow_html=True)
+
+    # 动作池
+    elif st.session_state['page'] == 'exercises':
+        st.markdown('<div class="page-title">💪 动作池管理</div>', unsafe_allow_html=True)
+        st.markdown('<div class="page-desc">自定义健身动作，AI 将从中推荐</div>', unsafe_allow_html=True)
+        
+        exercises = st.session_state.get('exercises', DEFAULT_EXERCISES)
+        st.markdown(f'<div class="stats"><div><div class="stat-value">{len(exercises)}</div><div class="stat-label">当前动作</div></div><div><div class="stat-value">{len(DEFAULT_EXERCISES)}</div><div class="stat-label">默认动作</div></div></div>', unsafe_allow_html=True)
+        
+        st.markdown("### 当前动作池")
+        if exercises:
+            chips = ''.join([f'<span class="exercise-chip">{ex}</span>' for ex in exercises])
+            st.markdown(f'<div style="margin:12px 0">{chips}</div>', unsafe_allow_html=True)
+            to_del = st.selectbox("删除动作", [""] + exercises, format_func=lambda x: "选择要删除的动作" if x == "" else f"× {x}")
+            if to_del:
+                st.session_state['exercises'].remove(to_del)
+                save_to_db()
+                st.rerun()
+        else:
+            st.info("动作池为空")
+        
+        st.markdown("---")
+        st.markdown("### 添加动作")
+        new_ex = st.text_input("动作名称", placeholder="如：引体向上")
+        if st.button("添加", use_container_width=True):
+            if new_ex and new_ex.strip():
+                if new_ex.strip() not in st.session_state['exercises']:
+                    st.session_state['exercises'].append(new_ex.strip())
                     save_to_db()
-                    st.session_state['show_key'] = False
-                    st.success("已保存")
                     st.rerun()
                 else:
-                    st.warning("请输入密钥")
-        with c2:
-            if st.session_state.get('show_key') and st.button("取消", use_container_width=True):
-                st.session_state['show_key'] = False
+                    st.warning("已存在")
+        
+        st.markdown("---")
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("恢复默认", use_container_width=True):
+                st.session_state['exercises'] = DEFAULT_EXERCISES.copy()
+                save_to_db()
                 st.rerun()
-    
-    st.markdown("---")
-    st.markdown("### 模型选择")
-    cur = st.session_state.get('model_name', 'DeepSeek-V3 (免费)')
-    sel = st.selectbox("模型", list(MODELS.keys()), index=list(MODELS.keys()).index(cur) if cur in MODELS else 0)
-    if sel != cur:
-        st.session_state['model_name'] = sel
-        st.session_state['model'] = MODELS[sel]
-        save_to_db()
-        st.rerun()
-    
-    st.markdown("---")
-    st.markdown("### 关于")
-    st.markdown("**韭菜的自我修养** v1.0\n\n[GitHub](https://github.com/Dxboy266/The-Stoic-Leek)")
+        with c2:
+            if st.button("清空", use_container_width=True):
+                st.session_state['exercises'] = []
+                save_to_db()
+                st.rerun()
+
+    # 设置
+    elif st.session_state['page'] == 'settings':
+        st.markdown('<div class="page-title">⚙️ 设置</div>', unsafe_allow_html=True)
+        
+        if st.session_state.get('db_error'):
+            st.error(f"数据库错误: {st.session_state['db_error']}")
+        
+        st.markdown("### API 密钥")
+        st.info("[硅基流动](https://siliconflow.cn) 注册获取免费密钥")
+        
+        current_key = st.session_state.get('api_key', '')
+        
+        if current_key and not st.session_state.get('show_key'):
+            st.success(f"✅ 已配置（{current_key[:8]}...）")
+            if st.button("更换密钥"):
+                st.session_state['show_key'] = True
+                st.rerun()
+        else:
+            new_key = st.text_input("API 密钥", type="password", value="" if st.session_state.get('show_key') else current_key)
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("保存密钥", use_container_width=True):
+                    if new_key and new_key.strip():
+                        st.session_state['api_key'] = new_key.strip()
+                        save_to_db()
+                        st.session_state['show_key'] = False
+                        st.success("已保存")
+                        st.rerun()
+                    else:
+                        st.warning("请输入密钥")
+            with c2:
+                if st.session_state.get('show_key') and st.button("取消", use_container_width=True):
+                    st.session_state['show_key'] = False
+                    st.rerun()
+        
+        st.markdown("---")
+        st.markdown("### 模型选择")
+        cur = st.session_state.get('model_name', 'DeepSeek-V3 (免费)')
+        sel = st.selectbox("模型", list(MODELS.keys()), index=list(MODELS.keys()).index(cur) if cur in MODELS else 0)
+        if sel != cur:
+            st.session_state['model_name'] = sel
+            st.session_state['model'] = MODELS[sel]
+            save_to_db()
+            st.rerun()
+        
+        st.markdown("---")
+        st.markdown("### 关于")
+        st.markdown("**韭菜的自我修养** v1.0\n\n[GitHub](https://github.com/Dxboy266/The-Stoic-Leek)")
