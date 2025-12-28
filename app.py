@@ -1,399 +1,319 @@
 """
 《韭菜的自我修养》The Stoic Leek
-一个帮助投资者通过健身任务管理情绪的 Streamlit 应用
 """
 
 import streamlit as st
-import random
 import requests
 import json
+import os
+from supabase import create_client, Client
 
-# 健身动作配置
-EXERCISE_CONFIG = {
-    "loss": ["深蹲", "俯卧撑", "卷腹", "高抬腿"],
-    "profit": ["波比跳", "深蹲", "俯卧撑", "开合跳"],
-    "neutral": ["平板支撑", "拉伸", "靠墙静蹲"]
+DEFAULT_EXERCISES = ["深蹲", "俯卧撑", "卷腹", "高抬腿", "波比跳", "开合跳", "平板支撑", "拉伸", "靠墙静蹲", "仰卧起坐", "跳绳", "原地跑"]
+
+MODELS = {
+    "DeepSeek-V3 (免费)": "deepseek-ai/DeepSeek-V3",
+    "DeepSeek-V2.5 (免费)": "deepseek-ai/DeepSeek-V2.5",
+    "Qwen2.5-7B (免费)": "Qwen/Qwen2.5-7B-Instruct",
+    "Qwen2.5-72B (免费)": "Qwen/Qwen2.5-72B-Instruct",
 }
 
-# 计算系数
-LOSS_DIVISOR = 10    # 亏损金额除数
-PROFIT_DIVISOR = 20  # 盈利金额除数
+st.set_page_config(page_title="韭菜的自我修养", page_icon="🌱", layout="centered", initial_sidebar_state="collapsed")
 
+# Supabase 配置 - 从环境变量或 secrets 读取
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or st.secrets.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or st.secrets.get("SUPABASE_KEY", "")
 
-def determine_mood(amount: float) -> str:
-    """
-    根据盈亏金额自动判断心情状态
+@st.cache_resource
+def get_supabase() -> Client:
+    if SUPABASE_URL and SUPABASE_KEY:
+        return create_client(SUPABASE_URL, SUPABASE_KEY)
+    return None
+
+supabase = get_supabase()
+
+def load_data():
+    if 'data_loaded' in st.session_state:
+        return
     
-    Args:
-        amount: 盈亏金额（正数为盈利，负数为亏损，零为持平）
+    # 默认值
+    st.session_state['exercises'] = DEFAULT_EXERCISES.copy()
+    st.session_state['model'] = "deepseek-ai/DeepSeek-V3"
+    st.session_state['model_name'] = "DeepSeek-V3 (免费)"
+    st.session_state['api_key'] = ""
     
-    Returns:
-        str: 心情状态（"焦虑"、"兴奋"或"平淡"）
-    """
-    if amount < 0:
-        return "焦虑"
-    elif amount > 0:
-        return "兴奋"
-    else:
-        return "平淡"
-
-
-def calculate_exercise_task(amount: float) -> tuple[str, int]:
-    """
-    根据盈亏金额计算健身任务
-    
-    Args:
-        amount: 盈亏金额（正数为盈利，负数为亏损，零为持平）
-    
-    Returns:
-        tuple: (动作名称, 动作数量)
-    """
-    if amount < 0:
-        # 亏损：abs(amount) // 10，最小为 1
-        count = max(1, int(abs(amount) // LOSS_DIVISOR))
-        exercise = random.choice(EXERCISE_CONFIG["loss"])
-    elif amount > 0:
-        # 盈利：amount // 20，最小为 1
-        count = max(1, int(amount // PROFIT_DIVISOR))
-        exercise = random.choice(EXERCISE_CONFIG["profit"])
-    else:
-        # 持平：固定数量
-        count = 30  # 平板支撑 30 秒或拉伸 30 秒
-        exercise = random.choice(EXERCISE_CONFIG["neutral"])
-    
-    return exercise, count
-
-
-def build_prompt(amount: float, mood: str, exercise: str, count: int) -> str:
-    """
-    构建 AI Prompt
-    
-    Args:
-        amount: 盈亏金额
-        mood: 心情状态
-        exercise: 健身动作
-        count: 动作数量
-    
-    Returns:
-        str: 完整的 prompt 文本
-    """
-    if amount < 0:
-        # 亏损场景：幽默嘲讽 + 斯多葛哲学
-        prompt = f"""你是一位幽默风趣且富有哲学智慧的投资顾问。用户今天亏损了 {abs(amount):.2f} 元，心情{mood}。
-
-请用幽默嘲讽的语气，结合斯多葛哲学的智慧，给用户一段简短的建议（100字以内）。要点：
-1. 用轻松幽默的方式嘲讽一下用户的亏损
-2. 引用斯多葛哲学的观点（如爱比克泰德、马可·奥勒留的思想），提醒用户专注于可控之事
-3. 鼓励用户通过完成 {count} 个{exercise}来发泄情绪、重获理性
-
-语气要轻松诙谐，但不失智慧。"""
-
-    elif amount > 0:
-        # 盈利场景：打击嚣张 + 风险警示
-        prompt = f"""你是一位冷静理性的投资顾问。用户今天盈利了 {amount:.2f} 元，心情{mood}。
-
-请用略带打击的幽默语气，给用户一段简短的警示建议（100字以内）。要点：
-1. 提醒用户不要过度兴奋，市场随时可能反转
-2. 强调风险管理和保持谦逊的重要性
-3. 建议用户通过完成 {count} 个{exercise}来冷静头脑、保持理性
-
-语气要幽默但犀利，让用户保持清醒。"""
-
-    else:
-        # 持平场景：平常心鼓励
-        prompt = f"""你是一位温和智慧的投资顾问。用户今天盈亏为零，心情{mood}。
-
-请用温和鼓励的语气，给用户一段简短的建议（100字以内）。要点：
-1. 肯定用户保持平常心的态度
-2. 鼓励用户继续保持理性和耐心
-3. 建议用户通过 {count} 秒的{exercise}来保持身心平衡
-
-语气要温和友善，传递正能量。"""
-
-    return prompt
-
-
-class AIClient:
-    """硅基流动 SiliconFlow API 客户端"""
-    
-    def __init__(self, api_key: str):
-        """
-        初始化客户端
-        
-        Args:
-            api_key: SiliconFlow API 密钥
-        """
-        self.api_key = api_key
-        self.base_url = "https://api.siliconflow.cn/v1"
-        self.model = "Qwen/Qwen2.5-7B-Instruct"
-    
-    def generate_advice(self, amount: float, mood: str, exercise: str, count: int) -> str:
-        """
-        生成投资建议文本
-        
-        Args:
-            amount: 盈亏金额
-            mood: 心情状态
-            exercise: 健身动作
-            count: 动作数量
-        
-        Returns:
-            str: AI 生成的建议文本
-        
-        Raises:
-            Exception: API 调用失败
-        """
-        # 构建 prompt
-        prompt = build_prompt(amount, mood, exercise, count)
-        
-        # 准备请求
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        data = {
-            "model": self.model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": 0.8,
-            "max_tokens": 500
-        }
-        
+    # 从 Supabase 加载
+    if supabase:
         try:
-            # 发送请求
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=data,
-                timeout=10
-            )
-            
-            # 检查响应
-            response.raise_for_status()
-            
-            # 解析响应
-            result = response.json()
-            advice = result['choices'][0]['message']['content']
-            
-            return advice.strip()
-            
-        except requests.exceptions.Timeout:
-            raise Exception("API 请求超时，请稍后重试")
-        except requests.exceptions.HTTPError as e:
-            if response.status_code == 401:
-                raise Exception("API 密钥无效，请检查配置")
-            elif response.status_code == 429:
-                raise Exception("请求过于频繁，请稍后重试")
-            else:
-                raise Exception(f"API 调用失败: {str(e)}")
+            resp = supabase.table("user_settings").select("*").eq("id", "default").execute()
+            if resp.data and len(resp.data) > 0:
+                data = resp.data[0]
+                if data.get('exercises'):
+                    st.session_state['exercises'] = data['exercises']
+                if data.get('model'):
+                    st.session_state['model'] = data['model']
+                if data.get('model_name'):
+                    st.session_state['model_name'] = data['model_name']
+                if data.get('api_key'):
+                    st.session_state['api_key'] = data['api_key']
         except Exception as e:
-            raise Exception(f"生成建议时出错: {str(e)}")
+            st.session_state['db_error'] = str(e)
+    
+    if 'page' not in st.session_state:
+        st.session_state['page'] = 'home'
+    st.session_state['data_loaded'] = True
 
-# 页面配置
-st.set_page_config(
-    page_title="《韭菜的自我修养》The Stoic Leek",
-    page_icon="💪",
-    layout="centered",
-    initial_sidebar_state="auto",
-    menu_items={
-        'Get Help': 'https://github.com/your-username/the-stoic-leek',
-        'Report a bug': "https://github.com/your-username/the-stoic-leek/issues",
-        'About': "# 《韭菜的自我修养》\n通过健身任务管理投资情绪的 AI 应用"
-    }
-)
+load_data()
 
-# 添加自定义 CSS 以优化移动端体验
+def save_to_db():
+    if not supabase:
+        return False
+    try:
+        supabase.table("user_settings").upsert({
+            "id": "default",
+            "api_key": st.session_state.get('api_key', ''),
+            "exercises": st.session_state.get('exercises', DEFAULT_EXERCISES),
+            "model": st.session_state.get('model', 'deepseek-ai/DeepSeek-V3'),
+            "model_name": st.session_state.get('model_name', 'DeepSeek-V3 (免费)')
+        }).execute()
+        return True
+    except Exception as e:
+        st.session_state['db_error'] = str(e)
+        return False
+
+def call_ai(api_key, model, amount, exercises):
+    if not api_key:
+        raise Exception("请先配置 API 密钥")
+    exercise_str = ', '.join(exercises) if exercises else '休息'
+    abs_amt = abs(amount)
+    level = "微小" if abs_amt < 10 else ("小额" if abs_amt < 100 else ("中等" if abs_amt < 1000 else "较大"))
+    
+    prompt = f"""用户今日盈亏：{amount:.2f} 元（{level}波动）
+规则：10元以下=平淡+休息，10-100=平淡+轻运动，100-1000=适量运动，1000+=需要运动
+可选运动：{exercise_str}
+输出（30字内，务实不夸张）：
+【心情】：焦虑/兴奋/平淡
+【运动】：动作×数量 或 休息
+【建议】：一句话"""
+
+    resp = requests.post(
+        "https://api.siliconflow.cn/v1/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={"model": model, "messages": [{"role": "user", "content": prompt}], "temperature": 0.6},
+        timeout=15
+    )
+    if resp.status_code == 401:
+        raise Exception("API 密钥无效")
+    resp.raise_for_status()
+    text = resp.json()['choices'][0]['message']['content'].strip()
+    
+    mood, exercise, advice = "平淡", "休息", text
+    for line in text.split('\n'):
+        if '【心情】' in line:
+            m = line.split('】')[-1].strip().strip('：:')
+            mood = "焦虑" if "焦虑" in m else ("兴奋" if "兴奋" in m else "平淡")
+        elif '【运动】' in line:
+            exercise = line.split('】')[-1].strip().strip('：:')
+        elif '【建议】' in line:
+            advice = line.split('】')[-1].strip().strip('：:')
+    return {"mood": mood, "exercise": exercise, "advice": advice, "full": text}
+
+
+# CSS
 st.markdown("""
 <style>
-    /* 移动端优化 */
-    @media (max-width: 768px) {
-        .stButton button {
-            width: 100%;
-            font-size: 16px;
-            padding: 12px;
-        }
-        
-        .stNumberInput input {
-            font-size: 16px;
-        }
-        
-        h1 {
-            font-size: 1.8rem !important;
-        }
-        
-        h2 {
-            font-size: 1.4rem !important;
-        }
-        
-        h3 {
-            font-size: 1.2rem !important;
-        }
-    }
-    
-    /* 通用样式优化 */
-    .stButton button {
-        border-radius: 8px;
-        font-weight: 500;
-    }
-    
-    .stMetric {
-        background-color: #f0f2f6;
-        padding: 15px;
-        border-radius: 8px;
-    }
+* { font-family: 'Inter', 'Noto Sans SC', -apple-system, sans-serif; }
+.stApp { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 30%, #f0fdf4 70%, #faf5ff 100%); }
+.block-container { max-width: 55% !important; min-width: 520px !important; padding: 1rem 2rem !important; padding-top: 0 !important; }
+#MainMenu, footer, [data-testid="stToolbar"], [data-testid="stSidebar"], [data-testid="stHeader"] { display: none !important; }
+header { display: none !important; }
+.header { text-align: center; padding: 0.5rem 0 1.5rem 0; }
+.app-icon { font-size: 4rem; display: block; }
+.header h1 { font-size: 2.25rem; font-weight: 700; background: linear-gradient(135deg, #0ea5e9, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+.header .subtitle { font-size: 1rem; color: #64748b; letter-spacing: 0.15em; }
+.header .desc { font-size: 0.9375rem; color: #475569; line-height: 1.8; max-width: 500px; margin: 1rem auto 0; }
+.page-title { font-size: 1.75rem; font-weight: 700; color: #1e293b; text-align: center; margin: 1rem 0 0.5rem; }
+.page-desc { font-size: 0.9375rem; color: #64748b; text-align: center; margin-bottom: 2rem; }
+.section-title { font-size: 1.0625rem; font-weight: 600; color: #1e293b; margin: 1.5rem 0 0.75rem; }
+.exercise-chip { display: inline-flex; padding: 6px 12px; margin: 4px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; font-size: 14px; color: #475569; }
+.result-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.5rem; margin: 1.5rem 0; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; margin-bottom: 1.25rem; }
+.result-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; text-align: center; }
+.result-value { font-size: 1.375rem; font-weight: 700; color: #0f172a; }
+.result-value.green { color: #10b981; }
+.result-value.red { color: #ef4444; }
+.result-label { font-size: 0.75rem; color: #64748b; }
+.advice-box { background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 12px; padding: 1rem; border-left: 4px solid #f59e0b; }
+.advice-title { font-size: 0.75rem; font-weight: 600; color: #92400e; margin-bottom: 0.5rem; }
+.advice-text { font-size: 0.9375rem; color: #78350f; line-height: 1.7; }
+.footer { text-align: center; padding: 2rem 0 1rem; color: #94a3b8; font-size: 0.875rem; }
+.stats { display: flex; justify-content: center; gap: 2rem; padding: 1rem; background: #f8fafc; border-radius: 12px; margin: 1rem 0; }
+.stat-value { font-size: 1.5rem; font-weight: 700; color: #8b5cf6; }
+.stat-label { font-size: 0.75rem; color: #64748b; }
+.save-hint { background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 0.75rem; font-size: 0.875rem; color: #065f46; text-align: center; margin: 1rem 0; }
+.db-status { padding: 8px 12px; border-radius: 8px; font-size: 13px; margin: 8px 0; }
+.db-ok { background: #d1fae5; color: #065f46; }
+.db-err { background: #fee2e2; color: #991b1b; }
+@media (max-width: 768px) { .block-container { max-width: 100% !important; padding: 1rem !important; min-width: unset !important; } .result-grid { grid-template-columns: 1fr; } }
 </style>
 """, unsafe_allow_html=True)
 
-# 应用标题
-st.title("《韭菜的自我修养》")
-st.subheader("The Stoic Leek")
+# 导航
+page = st.session_state.get('page', 'home')
+c1, c2, c3 = st.columns(3)
+with c1:
+    if st.button("🏠 首页", use_container_width=True, type="primary" if page == 'home' else "secondary"):
+        st.session_state['page'] = 'home'
+        st.rerun()
+with c2:
+    if st.button("💪 动作池", use_container_width=True, type="primary" if page == 'exercises' else "secondary"):
+        st.session_state['page'] = 'exercises'
+        st.rerun()
+with c3:
+    if st.button("⚙️ 设置", use_container_width=True, type="primary" if page == 'settings' else "secondary"):
+        st.session_state['page'] = 'settings'
+        st.rerun()
 
-# 应用说明
-st.markdown("""
-通过"对冲焦虑的肉体惩罚/奖励机制"帮助投资者管理情绪。
-将投资盈亏转化为健身任务，用幽默且带有斯多葛哲学意味的方式平衡心理波动。
-""")
 
-# 侧边栏配置
-with st.sidebar:
-    st.header("⚙️ 配置")
-    st.markdown("### API 密钥设置")
-    st.info("请在 [硅基流动](https://siliconflow.cn) 注册并获取免费 API 密钥")
+# 首页
+if st.session_state['page'] == 'home':
+    st.markdown('''<div class="header"><span class="app-icon">🌱</span><h1>《韭菜的自我修养》</h1><p class="subtitle">THE STOIC LEEK</p><p class="desc">通过"对冲焦虑的肉体惩罚/奖励机制"帮助投资者管理情绪。将投资盈亏转化为健身任务，用幽默且带有斯多葛哲学意味的方式平衡心理波动。</p></div>''', unsafe_allow_html=True)
     
-    api_key = st.text_input(
-        "SiliconFlow API 密钥",
-        type="password",
-        help="输入您的 API 密钥以使用 AI 生成功能"
-    )
+    if not supabase:
+        st.warning("数据库未配置，数据不会持久化")
     
-    # 存储 API 密钥到 session state
-    if api_key:
-        st.session_state['api_key'] = api_key
-
-# 主输入区域
-st.markdown("---")
-st.header("📊 输入今日投资情况")
-
-amount = st.number_input(
-    "盈亏金额（元）",
-    value=0.0,
-    step=100.0,
-    help="正数表示盈利，负数表示亏损，系统将自动判断您的心情状态"
-)
-
-# 生成处方按钮
-if st.button("🎯 生成处方", type="primary", use_container_width=True):
-    # 检查 API 密钥
-    if 'api_key' not in st.session_state or not st.session_state['api_key']:
-        st.info("💡 请先在侧边栏配置 API 密钥")
-    else:
-        # 输入验证
-        if abs(amount) > 1000000:
-            st.warning("⚠️ 金额似乎过大，请确认输入正确")
+    if not st.session_state.get('api_key'):
+        st.warning("请先前往「设置」页面配置 API 密钥")
+    
+    st.markdown('<div class="section-title">📊 输入今日投资情况</div>', unsafe_allow_html=True)
+    amount = st.number_input("盈亏金额（元）", value=None, step=100.0, placeholder="请输入金额")
+    
+    if st.button("生成处方", use_container_width=True):
+        if amount is None:
+            st.warning("请先输入金额")
+        elif not st.session_state.get('api_key'):
+            st.info("请先配置 API 密钥")
+        else:
+            with st.spinner("AI 分析中..."):
+                try:
+                    result = call_ai(st.session_state['api_key'], st.session_state['model'], amount, st.session_state['exercises'])
+                    st.session_state['result'] = {'amount': amount, **result}
+                except Exception as e:
+                    st.error(str(e))
+    
+    if 'result' in st.session_state:
+        r = st.session_state['result']
+        amt = r['amount']
+        color = "green" if amt > 0 else ("red" if amt < 0 else "")
+        amt_str = f"+¥{amt:.2f}" if amt > 0 else (f"-¥{abs(amt):.2f}" if amt < 0 else "¥0.00")
+        st.markdown(f'''<div class="result-card"><div class="result-grid"><div class="result-item"><div class="result-value {color}">{amt_str}</div><div class="result-label">今日盈亏</div></div><div class="result-item"><div class="result-value">{r['mood']}</div><div class="result-label">心情状态</div></div><div class="result-item"><div class="result-value">{r['exercise']}</div><div class="result-label">运动建议</div></div></div><div class="advice-box"><div class="advice-title">🧠 AI 建议</div><div class="advice-text">{r['advice']}</div></div></div>''', unsafe_allow_html=True)
         
-        # 显示加载动画
-        with st.spinner("🤖 AI 正在生成您的专属处方..."):
+        if st.button("重新生成", use_container_width=True):
             try:
-                # 自动判断心情状态
-                mood = determine_mood(amount)
-                
-                # 计算健身任务
-                exercise, count = calculate_exercise_task(amount)
-                
-                # 调用 AI 生成建议
-                ai_client = AIClient(st.session_state['api_key'])
-                advice = ai_client.generate_advice(amount, mood, exercise, count)
-                
-                # 存储处方到 session state
-                st.session_state['prescription'] = {
-                    'amount': amount,
-                    'mood': mood,
-                    'exercise': exercise,
-                    'count': count,
-                    'advice': advice
-                }
-                
-                st.success("✅ 处方生成成功！")
-                
-            except Exception as e:
-                st.error(f"❌ 生成处方失败: {str(e)}")
-                st.info("💡 请检查 API 密钥是否正确，或稍后重试")
-
-# 显示处方
-if 'prescription' in st.session_state:
-    st.markdown("---")
-    st.header("📋 您的投资处方")
-    
-    prescription = st.session_state['prescription']
-    amount = prescription['amount']
-    exercise = prescription['exercise']
-    count = prescription['count']
-    advice = prescription['advice']
-    
-    # 根据盈亏类型选择颜色和 emoji
-    if amount < 0:
-        color = "red"
-        emoji = "📉"
-        status_text = f"亏损 {abs(amount):.2f} 元"
-    elif amount > 0:
-        color = "green"
-        emoji = "📈"
-        status_text = f"盈利 {amount:.2f} 元"
-    else:
-        color = "gray"
-        emoji = "➖"
-        status_text = "持平"
-    
-    # 显示盈亏状态
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(
-            label=f"{emoji} 今日盈亏",
-            value=status_text
-        )
-    with col2:
-        st.metric(
-            label="💪 健身任务",
-            value=f"{exercise} x {count}"
-        )
-    
-    # 显示 AI 建议
-    st.markdown("### 🧠 AI 建议")
-    st.info(advice)
-    
-    # 重新生成按钮
-    if st.button("🔄 重新生成", type="secondary", use_container_width=True):
-        with st.spinner("🤖 AI 正在重新生成处方..."):
-            try:
-                # 使用相同的金额，心情会自动重新判断（结果相同）
-                mood = determine_mood(amount)
-                
-                # 重新计算健身任务（随机选择新动作）
-                exercise, count = calculate_exercise_task(amount)
-                
-                # 调用 AI 生成新建议
-                ai_client = AIClient(st.session_state['api_key'])
-                advice = ai_client.generate_advice(amount, mood, exercise, count)
-                
-                # 更新处方
-                st.session_state['prescription'] = {
-                    'amount': amount,
-                    'mood': mood,
-                    'exercise': exercise,
-                    'count': count,
-                    'advice': advice
-                }
-                
+                result = call_ai(st.session_state['api_key'], st.session_state['model'], amt, st.session_state['exercises'])
+                st.session_state['result'] = {'amount': amt, **result}
                 st.rerun()
-                
             except Exception as e:
-                st.error(f"❌ 重新生成失败: {str(e)}")
+                st.error(str(e))
+    
+    st.markdown('<div class="footer">保持理性 · 保持运动 · 保持韭菜的自我修养</div>', unsafe_allow_html=True)
 
-# 页脚
-st.markdown("---")
-st.caption("💪 保持理性，保持运动，保持韭菜的自我修养")
+# 动作池
+elif st.session_state['page'] == 'exercises':
+    st.markdown('<div class="page-title">💪 动作池管理</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-desc">自定义健身动作，AI 将从中推荐</div>', unsafe_allow_html=True)
+    
+    exercises = st.session_state.get('exercises', DEFAULT_EXERCISES)
+    st.markdown(f'<div class="stats"><div><div class="stat-value">{len(exercises)}</div><div class="stat-label">当前动作</div></div><div><div class="stat-value">{len(DEFAULT_EXERCISES)}</div><div class="stat-label">默认动作</div></div></div>', unsafe_allow_html=True)
+    
+    st.markdown("### 当前动作池")
+    if exercises:
+        chips = ''.join([f'<span class="exercise-chip">{ex}</span>' for ex in exercises])
+        st.markdown(f'<div style="margin:12px 0">{chips}</div>', unsafe_allow_html=True)
+        to_del = st.selectbox("删除动作", [""] + exercises, format_func=lambda x: "选择要删除的动作" if x == "" else f"× {x}")
+        if to_del:
+            st.session_state['exercises'].remove(to_del)
+            save_to_db()
+            st.rerun()
+    else:
+        st.info("动作池为空")
+    
+    st.markdown("---")
+    st.markdown("### 添加动作")
+    new_ex = st.text_input("动作名称", placeholder="如：引体向上")
+    if st.button("添加", use_container_width=True):
+        if new_ex and new_ex.strip():
+            if new_ex.strip() not in st.session_state['exercises']:
+                st.session_state['exercises'].append(new_ex.strip())
+                save_to_db()
+                st.rerun()
+            else:
+                st.warning("已存在")
+    
+    st.markdown("---")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("恢复默认", use_container_width=True):
+            st.session_state['exercises'] = DEFAULT_EXERCISES.copy()
+            save_to_db()
+            st.rerun()
+    with c2:
+        if st.button("清空", use_container_width=True):
+            st.session_state['exercises'] = []
+            save_to_db()
+            st.rerun()
+
+# 设置
+elif st.session_state['page'] == 'settings':
+    st.markdown('<div class="page-title">⚙️ 设置</div>', unsafe_allow_html=True)
+    
+    # 数据库状态
+    if supabase:
+        st.markdown('<div class="db-status db-ok">✅ 数据库已连接</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="db-status db-err">⚠️ 数据库未配置</div>', unsafe_allow_html=True)
+        st.info("请在 Streamlit Cloud 的 Secrets 中配置 SUPABASE_URL 和 SUPABASE_KEY")
+    
+    if st.session_state.get('db_error'):
+        st.error(f"数据库错误: {st.session_state['db_error']}")
+    
+    st.markdown("### API 密钥")
+    st.info("[硅基流动](https://siliconflow.cn) 注册获取免费密钥")
+    
+    current_key = st.session_state.get('api_key', '')
+    
+    if current_key and not st.session_state.get('show_key'):
+        st.success(f"✅ 已配置（{current_key[:8]}...）")
+        if st.button("更换密钥"):
+            st.session_state['show_key'] = True
+            st.rerun()
+    else:
+        new_key = st.text_input("API 密钥", type="password", value="" if st.session_state.get('show_key') else current_key)
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("保存密钥", use_container_width=True):
+                if new_key and new_key.strip():
+                    st.session_state['api_key'] = new_key.strip()
+                    save_to_db()
+                    st.session_state['show_key'] = False
+                    st.success("已保存")
+                    st.rerun()
+                else:
+                    st.warning("请输入密钥")
+        with c2:
+            if st.session_state.get('show_key') and st.button("取消", use_container_width=True):
+                st.session_state['show_key'] = False
+                st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### 模型选择")
+    cur = st.session_state.get('model_name', 'DeepSeek-V3 (免费)')
+    sel = st.selectbox("模型", list(MODELS.keys()), index=list(MODELS.keys()).index(cur) if cur in MODELS else 0)
+    if sel != cur:
+        st.session_state['model_name'] = sel
+        st.session_state['model'] = MODELS[sel]
+        save_to_db()
+        st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### 关于")
+    st.markdown("**韭菜的自我修养** v1.0\n\n[GitHub](https://github.com/Dxboy266/The-Stoic-Leek)")

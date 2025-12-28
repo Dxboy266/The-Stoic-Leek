@@ -44,7 +44,7 @@ git push -u origin main
 ### 3. 等待部署完成
 
 - 首次部署需要 2-5 分钟
-- 部署完成后会获得一个 URL：`https://the-stoic-leek.streamlit.app`
+- 部署完成后会获得一个 URL：`https://stoic-leek.streamlit.app`
 - 这个 URL 可以在任何设备上访问
 
 ### 4. 更新应用

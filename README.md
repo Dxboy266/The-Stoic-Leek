@@ -2,7 +2,7 @@
 
 一个帮助投资者通过健身任务管理情绪的 Web 应用。将投资盈亏转化为健身任务，用幽默且带有斯多葛哲学意味的方式平衡心理波动。
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://the-stoic-leek.streamlit.app)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://stoic-leek.streamlit.app)
 [![GitHub](https://img.shields.io/github/license/Dxboy266/The-Stoic-Leek)](https://github.com/Dxboy266/The-Stoic-Leek/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/Dxboy266/The-Stoic-Leek)](https://github.com/Dxboy266/The-Stoic-Leek/stargazers)
 
@@ -53,7 +53,7 @@ streamlit run app.py
 
 ### 在线体验
 
-访问 [在线演示](https://the-stoic-leek.streamlit.app)
+访问 [在线演示](https://stoic-leek.streamlit.app)
 
 ## 📦 依赖
 
