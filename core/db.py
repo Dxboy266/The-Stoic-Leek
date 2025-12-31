@@ -4,6 +4,7 @@
 
 import streamlit as st
 import os
+from datetime import date
 
 # 延迟导入，避免启动时加载 supabase
 _supabase_client = None
@@ -31,6 +32,11 @@ def _get_defaults():
     """获取默认配置（懒加载）"""
     from config import DEFAULT_EXERCISES, DEFAULT_MODEL, DEFAULT_MODEL_NAME
     return DEFAULT_EXERCISES, DEFAULT_MODEL, DEFAULT_MODEL_NAME
+
+
+def _today_str() -> str:
+    """获取今天日期字符串"""
+    return date.today().isoformat()
 
 
 def load_user_data(user_id: str):
@@ -63,6 +69,12 @@ def load_user_data(user_id: str):
                 st.session_state['api_key'] = data['api_key']
             if data.get('total_assets'):
                 st.session_state['total_assets'] = float(data['total_assets'])
+            
+            # 加载当天记录
+            record_date = data.get('record_date')
+            today_record = data.get('today_record')
+            if record_date == _today_str() and today_record:
+                st.session_state['result'] = today_record
     except Exception as e:
         st.session_state['db_error'] = str(e)
 
@@ -76,14 +88,21 @@ def save_user_data(user_id: str) -> bool:
         return False
     
     try:
-        supabase.table("user_settings").upsert({
+        data = {
             "id": user_id,
             "api_key": st.session_state.get('api_key', ''),
             "exercises": st.session_state.get('exercises', DEFAULT_EXERCISES),
             "model": st.session_state.get('model', DEFAULT_MODEL),
             "model_name": st.session_state.get('model_name', DEFAULT_MODEL_NAME),
             "total_assets": st.session_state.get('total_assets')
-        }).execute()
+        }
+        
+        # 如果有当天结果，也保存
+        if 'result' in st.session_state:
+            data['today_record'] = st.session_state['result']
+            data['record_date'] = _today_str()
+        
+        supabase.table("user_settings").upsert(data).execute()
         return True
     except Exception as e:
         st.session_state['db_error'] = str(e)

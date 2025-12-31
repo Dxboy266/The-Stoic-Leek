@@ -7,10 +7,12 @@
 
 ## ✨ 特性
 
-- 🔐 **用户系统**：支持注册登录，会话自动保持
+- 🔐 **用户系统**：支持注册登录，数据按用户隔离
 - 🤖 **AI 驱动**：斯多葛风格的毒舌健身教练
 - 💪 **动作池管理**：自定义健身动作
-- ☁️ **云端存储**：基于 Supabase，数据安全持久化
+- ☁️ **云端存储**：基于 Supabase，数据持久化
+- 📊 **每日记录**：每天记录一次盈亏，自动更新本金
+- 📤 **分享卡片**：生成精美的处方卡片图片
 
 ## 🎯 工作原理
 
@@ -70,15 +72,24 @@ SUPABASE_KEY = "your-supabase-anon-key"
 
 在 Supabase SQL Editor 运行：
 ```sql
+-- 用户设置表
 CREATE TABLE user_settings (
-    id TEXT PRIMARY KEY,
-    api_key TEXT,
-    exercises TEXT[],
-    model TEXT DEFAULT 'deepseek-ai/DeepSeek-V3',
-    model_name TEXT DEFAULT 'DeepSeek-V3 (免费)',
+    id TEXT PRIMARY KEY,                                    -- 用户ID，关联 auth.users
+    api_key TEXT,                                           -- AI API 密钥（硅基流动）
+    exercises TEXT[],                                       -- 自定义动作池
+    model TEXT DEFAULT 'deepseek-ai/DeepSeek-V3',          -- AI 模型标识
+    model_name TEXT DEFAULT 'DeepSeek-V3 (免费)',          -- AI 模型显示名称
+    total_assets DECIMAL(12, 2),                           -- 投资本金（元）
+    today_record JSONB,                                     -- 当日处方记录
+    record_date DATE,                                       -- 记录日期
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- 添加字段备注
+COMMENT ON TABLE user_settings IS '用户设置和每日记录';
+COMMENT ON COLUMN user_settings.today_record IS '当日处方，包含 amount/roi/mood/exercise/advice';
+COMMENT ON COLUMN user_settings.record_date IS '记录日期，用于判断是否当天已记录';
 ```
 
 5. **启动应用**

@@ -44,7 +44,8 @@ def sign_in(supabase, email: str, password: str) -> tuple[bool, str]:
     try:
         resp = supabase.auth.sign_in_with_password({"email": email, "password": password})
         if resp.user and resp.session:
-            st.session_state['user'] = {"id": resp.user.id, "email": resp.user.email}
+            user = {"id": resp.user.id, "email": resp.user.email}
+            st.session_state['user'] = user
             st.session_state['data_loaded'] = False
             return True, "登录成功"
         return False, "登录失败"
