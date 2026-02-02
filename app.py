@@ -22,38 +22,148 @@ st.markdown("""
 * { font-family: 'Inter', 'Noto Sans SC', -apple-system, sans-serif; }
 .stApp { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 30%, #f0fdf4 70%, #faf5ff 100%); }
 .block-container { max-width: 55% !important; min-width: 520px !important; padding: 1rem 2rem !important; padding-top: 0 !important; }
+
+/* 隐藏 Streamlit 默认元素 */
 #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stSidebar"], [data-testid="stHeader"] { display: none !important; }
 header { display: none !important; }
+
+/* 输入框磨砂玻璃效果 */
+.stTextInput > div > div {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+}
+.stTextInput > div > div:focus-within {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+}
+.stNumberInput > div > div {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+}
+
+/* 按钮样式 - 胶囊渐变 */
+.stButton > button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 25px !important;
+    padding: 0.6rem 1.5rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
+}
+.stButton > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5) !important;
+}
+.stButton > button:active {
+    transform: translateY(0) !important;
+}
+/* 次要按钮 */
+.stButton > button[kind="secondary"] {
+    background: rgba(255, 255, 255, 0.8) !important;
+    color: #475569 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+.stButton > button[kind="secondary"]:hover {
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* 下载按钮特殊样式 */
+.stDownloadButton > button {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 25px !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important;
+}
+.stDownloadButton > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+}
+
+/* Tabs 样式 */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 4px;
+    border-radius: 12px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+}
+.stTabs [aria-selected="true"] {
+    background: white !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 指标卡片阴影 */
+div[data-testid="metric-container"] {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    backdrop-filter: blur(10px);
+}
+
 .header { text-align: center; padding: 0.5rem 0 1.5rem 0; }
 .app-icon { font-size: 4rem; display: block; }
 .header h1 { font-size: 2.25rem; font-weight: 700; background: linear-gradient(135deg, #0ea5e9, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+.header h1 a { text-decoration: none; background: linear-gradient(135deg, #0ea5e9, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .header .slogan-en { font-size: 0.875rem; color: #94a3b8; letter-spacing: 0.05em; margin-top: 0.5rem; font-style: italic; }
 .header .slogan-cn { font-size: 1rem; color: #64748b; margin-top: 0.25rem; }
 .header .desc { font-size: 0.9375rem; color: #475569; line-height: 1.8; max-width: 500px; margin: 1rem auto 0; }
 .page-title { font-size: 1.75rem; font-weight: 700; color: #1e293b; text-align: center; margin: 1rem 0 0.5rem; }
 .page-desc { font-size: 0.9375rem; color: #64748b; text-align: center; margin-bottom: 2rem; }
 .section-title { font-size: 1.0625rem; font-weight: 600; color: #1e293b; margin: 1.5rem 0 0.75rem; }
-.exercise-chip { display: inline-flex; padding: 6px 12px; margin: 4px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; font-size: 14px; color: #475569; }
-.result-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 1.5rem; margin: 1.5rem 0; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.exercise-chip { display: inline-flex; padding: 6px 12px; margin: 4px; background: rgba(255,255,255,0.8); border: 1px solid #e2e8f0; border-radius: 16px; font-size: 14px; color: #475569; backdrop-filter: blur(5px); }
+.result-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); border-radius: 18px; padding: 1.5rem; margin: 1.5rem 0; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
 .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; margin-bottom: 1.25rem; }
-.result-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; text-align: center; }
+.result-item { background: rgba(248,250,252,0.8); border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; text-align: center; }
 .result-value { font-size: 1.375rem; font-weight: 700; color: #0f172a; }
 .result-value.profit { color: #ef4444; }
 .result-value.loss { color: #10b981; }
-.exercise-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+.exercise-card { background: rgba(248,250,252,0.8); border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
 .exercise-title { text-align: center; font-size: 0.75rem; color: #64748b; margin-bottom: 0.75rem; font-weight: 500; }
 .exercise-list { text-align: left; padding: 0 0.5rem; }
 .exercise-item { font-size: 1.125rem; font-weight: 600; color: #0f172a; padding: 0.25rem 0; }
 .exercise-item.rest { color: #64748b; font-weight: 500; text-align: center; }
 .result-label { font-size: 0.75rem; color: #64748b; }
-.advice-box { background: #f0f9ff; border-radius: 12px; padding: 1rem; border-left: 4px solid #0ea5e9; }
+.advice-box { background: linear-gradient(135deg, rgba(240,249,255,0.9), rgba(224,242,254,0.9)); border-radius: 12px; padding: 1rem; border-left: 4px solid #0ea5e9; backdrop-filter: blur(5px); }
 .advice-title { font-size: 0.75rem; font-weight: 600; color: #0369a1; margin-bottom: 0.5rem; }
 .advice-text { font-size: 0.9375rem; color: #0c4a6e; line-height: 1.7; }
 .footer { text-align: center; padding: 2rem 0 1rem; color: #94a3b8; font-size: 0.875rem; }
-.stats { display: flex; justify-content: center; gap: 2rem; padding: 1rem; background: #f8fafc; border-radius: 12px; margin: 1rem 0; }
+.stats { display: flex; justify-content: center; gap: 2rem; padding: 1rem; background: rgba(248,250,252,0.8); border-radius: 12px; margin: 1rem 0; backdrop-filter: blur(5px); }
 .stat-value { font-size: 1.5rem; font-weight: 700; color: #8b5cf6; }
 .stat-label { font-size: 0.75rem; color: #64748b; }
-@media (max-width: 768px) { .block-container { max-width: 100% !important; padding: 1rem !important; min-width: unset !important; } .result-grid { grid-template-columns: 1fr; } }
+
+@media (max-width: 768px) {
+    .block-container { max-width: 100% !important; padding: 0.75rem !important; min-width: unset !important; }
+    .header { padding: 0.25rem 0 1rem 0; }
+    .header h1 { font-size: 1.75rem; }
+    .header .slogan-en { font-size: 0.75rem; }
+    .header .slogan-cn { font-size: 0.875rem; }
+    .app-icon { font-size: 3rem; }
+    .result-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+    .result-item { padding: 0.75rem; }
+    .result-value { font-size: 1.25rem; }
+    .exercise-card { padding: 0.75rem; }
+    .exercise-item { font-size: 1rem; }
+    .advice-box { padding: 0.75rem; }
+    .advice-text { font-size: 0.875rem; }
+    .section-title { font-size: 1rem; margin: 1rem 0 0.5rem; }
+    .footer { padding: 1.5rem 0 0.5rem; font-size: 0.75rem; }
+    .stButton > button { padding: 0.5rem 1rem !important; font-size: 0.875rem !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -69,101 +179,254 @@ user = try_restore_session(_get_supabase()) or st.session_state.get('user')
 
 # ========== 页面组件 ==========
 def show_auth_page():
-    """登录/注册页面"""
-    st.markdown('''<div class="header">
-        <span class="app-icon">🌱</span>
-        <h1><a href="https://github.com/Dxboy266/The-Stoic-Leek" target="_blank" style="text-decoration:none;color:inherit;">韭菜的自我修养</a></h1>
-        <p class="slogan-en">Market volatility is noise; Muscle pain is real.</p>
-        <p class="slogan-cn">市场涨跌皆虚妄，唯有酸痛最真实。</p>
-    </div>''', unsafe_allow_html=True)
+    """登录/注册页面 - 单体式现代卡片"""
     
-    tab1, tab2 = st.tabs(["登录", "注册"])
+    # 精修样式 - 紫/白/灰三色统一
+    st.markdown('''<style>
+    /* ===== 1. 实心白卡片 - 强边界感 ===== */
+    div[data-testid="column"]:nth-of-type(2) > div {
+        background: rgba(255, 255, 255, 0.92) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 2rem 2rem 1.5rem 2rem !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.95) !important;
+    }
     
-    with tab1:
-        email = st.text_input("邮箱", key="login_email")
-        password = st.text_input("密码", type="password", key="login_pwd")
+    /* ===== 2. 极简输入框 ===== */
+    div[data-testid="column"]:nth-of-type(2) .stTextInput > div > div {
+        background: #f5f5f7 !important;
+        border: 2px solid transparent !important;
+        border-radius: 12px !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) .stTextInput > div > div:focus-within {
+        border-color: #667eea !important;
+        background: #fff !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12) !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) .stTextInput input {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.95rem !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) .stTextInput {
+        margin-bottom: 0.75rem;
+    }
+    
+    /* ===== 3. Tabs - 强制紫色，消灭红色 ===== */
+    div[data-testid="column"]:nth-of-type(2) .stTabs [data-baseweb="tab-list"] {
+        background: transparent !important;
+        gap: 0 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        justify-content: center;
+        margin-top: -8px !important;
+        margin-bottom: 1.25rem;
+        padding: 0 !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) .stTabs [data-baseweb="tab"] {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #9ca3af !important;
+        padding: 0.6rem 1.75rem !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        border-bottom: 2px solid transparent !important;
+        margin-bottom: -1px;
+    }
+    div[data-testid="column"]:nth-of-type(2) .stTabs [data-baseweb="tab"]:hover {
+        color: #667eea !important;
+    }
+    /* 选中状态 - 紫色文字+紫色下划线 */
+    div[data-testid="column"]:nth-of-type(2) .stTabs [aria-selected="true"] {
+        color: #667eea !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-bottom-color: #667eea !important;
+        font-weight: 600;
+    }
+    /* 彻底隐藏 Streamlit 默认红色高亮 */
+    div[data-testid="column"]:nth-of-type(2) .stTabs [data-baseweb="tab-highlight"] {
+        display: none !important;
+        background-color: transparent !important;
+        height: 0 !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) .stTabs [data-baseweb="tab-border"] {
+        display: none !important;
+    }
+    /* 覆盖所有可能的红色来源 */
+    div[data-testid="column"]:nth-of-type(2) .stTabs button[data-baseweb="tab"]::before,
+    div[data-testid="column"]:nth-of-type(2) .stTabs button[data-baseweb="tab"]::after {
+        background-color: #667eea !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) .stTabs [role="tablist"] > div:last-child {
+        background-color: #667eea !important;
+    }
+    
+    /* ===== 4. Logo 区域 - 紧凑 ===== */
+    .auth-logo {
+        text-align: center;
+        margin-bottom: 0.25rem;
+        padding-bottom: 0;
+    }
+    .auth-logo .icon {
+        font-size: 2.75rem;
+        display: block;
+        margin-bottom: 0.4rem;
+    }
+    .auth-logo h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.2rem 0;
+        letter-spacing: -0.02em;
+    }
+    .auth-logo p {
+        color: #9ca3af;
+        font-size: 0.78rem;
+        margin: 0;
+    }
+    
+    /* ===== 5. 底部链接 ===== */
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.25rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f0f0f0;
+        font-size: 0.72rem;
+        color: #9ca3af;
+    }
+    .auth-footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+    
+    /* ===== 6. 按钮 - 紫色渐变 ===== */
+    div[data-testid="column"]:nth-of-type(2) .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        padding: 0.7rem 1rem !important;
+        margin-top: 0.5rem;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35) !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45) !important;
+    }
+    </style>''', unsafe_allow_html=True)
+    
+    # 三列布局 - 中间列自动成为卡片
+    _, col2, _ = st.columns([1, 1.2, 1])
+    
+    with col2:
+        # Logo - 在卡片内
+        st.markdown('''<div class="auth-logo">
+            <span class="icon">🌱</span>
+            <h1>韭菜的自我修养</h1>
+            <p>市场涨跌皆虚妄，唯有酸痛最真实</p>
+        </div>''', unsafe_allow_html=True)
         
-        is_loading = st.session_state.get('login_loading', False)
+        # Tabs
+        tab1, tab2 = st.tabs(["登录", "注册"])
         
-        if st.button(
-            "登录中..." if is_loading else "登录",
-            use_container_width=True,
-            disabled=is_loading,
-            key="login_btn"
-        ):
-            if email and password:
-                st.session_state['login_loading'] = True
-                st.session_state['login_data'] = (email, password)
-                st.rerun()
-            else:
-                st.warning("请填写邮箱和密码")
-        
-        # 执行登录
-        if is_loading and 'login_data' in st.session_state:
-            email, password = st.session_state['login_data']
-            try:
-                supabase = _get_supabase()
-                if not supabase:
-                    st.error("数据库未配置")
+        with tab1:
+            email = st.text_input("邮箱", key="login_email", label_visibility="collapsed", placeholder="邮箱")
+            password = st.text_input("密码", type="password", key="login_pwd", label_visibility="collapsed", placeholder="密码")
+            
+            is_loading = st.session_state.get('login_loading', False)
+            
+            if st.button(
+                "登录中..." if is_loading else "登录",
+                use_container_width=True,
+                disabled=is_loading,
+                key="login_btn",
+                type="primary"
+            ):
+                if email and password:
+                    st.session_state['login_loading'] = True
+                    st.session_state['login_data'] = (email, password)
+                    st.rerun()
                 else:
-                    ok, msg = sign_in(supabase, email, password)
-                    if ok:
-                        st.session_state['login_loading'] = False
-                        if 'login_data' in st.session_state:
+                    st.warning("请填写邮箱和密码")
+            
+            if is_loading and 'login_data' in st.session_state:
+                email, password = st.session_state['login_data']
+                try:
+                    supabase = _get_supabase()
+                    if not supabase:
+                        st.error("数据库未配置")
+                    else:
+                        ok, msg = sign_in(supabase, email, password)
+                        if ok:
+                            st.session_state['login_loading'] = False
                             del st.session_state['login_data']
-                        st.rerun()
-                    else:
-                        st.error(msg)
-            except Exception as e:
-                st.error(f"连接失败：{str(e)}")
-            # 无论成功失败都重置状态
-            st.session_state['login_loading'] = False
-            if 'login_data' in st.session_state:
-                del st.session_state['login_data']
-    
-    with tab2:
-        email2 = st.text_input("邮箱", key="reg_email")
-        password2 = st.text_input("密码（至少6位）", type="password", key="reg_pwd")
-        password3 = st.text_input("确认密码", type="password", key="reg_pwd2")
+                            st.rerun()
+                        else:
+                            st.error(msg)
+                except Exception as e:
+                    st.error(f"连接失败：{str(e)}")
+                st.session_state['login_loading'] = False
+                if 'login_data' in st.session_state:
+                    del st.session_state['login_data']
         
-        is_reg_loading = st.session_state.get('reg_loading', False)
-        
-        if st.button(
-            "注册中..." if is_reg_loading else "注册",
-            use_container_width=True,
-            disabled=is_reg_loading,
-            key="reg_btn"
-        ):
-            if not email2 or not password2:
-                st.warning("请填写邮箱和密码")
-            elif len(password2) < 6:
-                st.warning("密码至少6位")
-            elif password2 != password3:
-                st.warning("两次密码不一致")
-            else:
-                st.session_state['reg_loading'] = True
-                st.session_state['reg_data'] = (email2, password2)
-                st.rerun()
-        
-        # 执行注册
-        if is_reg_loading and 'reg_data' in st.session_state:
-            email2, password2 = st.session_state['reg_data']
-            try:
-                supabase = _get_supabase()
-                if not supabase:
-                    st.error("数据库未配置")
+        with tab2:
+            email2 = st.text_input("邮箱", key="reg_email", label_visibility="collapsed", placeholder="邮箱")
+            password2 = st.text_input("密码", type="password", key="reg_pwd", label_visibility="collapsed", placeholder="密码（至少6位）")
+            password3 = st.text_input("确认", type="password", key="reg_pwd2", label_visibility="collapsed", placeholder="确认密码")
+            
+            is_reg_loading = st.session_state.get('reg_loading', False)
+            
+            if st.button(
+                "注册中..." if is_reg_loading else "注册",
+                use_container_width=True,
+                disabled=is_reg_loading,
+                key="reg_btn",
+                type="primary"
+            ):
+                if not email2 or not password2:
+                    st.warning("请填写邮箱和密码")
+                elif len(password2) < 6:
+                    st.warning("密码至少6位")
+                elif password2 != password3:
+                    st.warning("两次密码不一致")
                 else:
-                    ok, msg = sign_up(supabase, email2, password2)
-                    if ok:
-                        st.success(msg)
+                    st.session_state['reg_loading'] = True
+                    st.session_state['reg_data'] = (email2, password2)
+                    st.rerun()
+            
+            if is_reg_loading and 'reg_data' in st.session_state:
+                email2, password2 = st.session_state['reg_data']
+                try:
+                    supabase = _get_supabase()
+                    if not supabase:
+                        st.error("数据库未配置")
                     else:
-                        st.error(msg)
-            except Exception as e:
-                st.error(f"连接失败：{str(e)}")
-            # 无论成功失败都重置状态
-            st.session_state['reg_loading'] = False
-            if 'reg_data' in st.session_state:
-                del st.session_state['reg_data']
+                        ok, msg = sign_up(supabase, email2, password2)
+                        if ok:
+                            st.success(msg)
+                        else:
+                            st.error(msg)
+                except Exception as e:
+                    st.error(f"连接失败：{str(e)}")
+                st.session_state['reg_loading'] = False
+                if 'reg_data' in st.session_state:
+                    del st.session_state['reg_data']
+        
+        # 底部
+        st.markdown('''<div class="auth-footer">
+            <a href="https://github.com/Dxboy266/The-Stoic-Leek" target="_blank">GitHub</a>
+            <span style="margin: 0 0.5rem">·</span>
+            <a href="https://siliconflow.cn" target="_blank">获取 API Key</a>
+        </div>''', unsafe_allow_html=True)
 
 
 def show_home_page(user):
@@ -209,27 +472,30 @@ def show_home_page(user):
             <div class="advice-box"><div class="advice-title">AI 建议</div><div class="advice-text">{r['advice']}</div></div>
         </div>''', unsafe_allow_html=True)
         
-        # 按钮区
-        if st.button("🔄 重新生成", use_container_width=True):
-            st.session_state['generating'] = True
-            st.session_state['gen_data'] = (r['amount'], r['total_assets'])
-            st.session_state['is_regenerate'] = True
-            st.rerun()
-        
-        # 分享按钮
+        # 按钮区 - 水平并排
         card_bytes = generate_share_card(
             amount=r['amount'],
             roi=r.get('roi', 0),
             exercise=r['exercise'],
             advice=r['advice']
         )
-        st.download_button(
-            label="📤 下载分享卡片",
-            data=card_bytes,
-            file_name="韭菜处方单.png",
-            mime="image/png",
-            use_container_width=True
-        )
+        
+        col_regen, col_download = st.columns([1, 1.5])
+        with col_regen:
+            if st.button("🔄 重新生成", use_container_width=True, type="secondary"):
+                st.session_state['generating'] = True
+                st.session_state['gen_data'] = (r['amount'], r['total_assets'])
+                st.session_state['is_regenerate'] = True
+                st.rerun()
+        with col_download:
+            st.download_button(
+                label="📤 下载分享卡片",
+                data=card_bytes,
+                file_name="韭菜处方单.png",
+                mime="image/png",
+                use_container_width=True,
+                type="primary"
+            )
     
     else:
         # ===== 输入页 =====
@@ -433,26 +699,14 @@ else:
         load_user_data(user['id'])
         st.session_state['data_loaded'] = True
     
-    # 导航
-    page = st.session_state.get('page', 'home')
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        if st.button("🏠 首页", use_container_width=True, type="primary" if page == 'home' else "secondary"):
-            st.session_state['page'] = 'home'
-            st.rerun()
-    with c2:
-        if st.button("💪 动作池", use_container_width=True, type="primary" if page == 'exercises' else "secondary"):
-            st.session_state['page'] = 'exercises'
-            st.rerun()
-    with c3:
-        if st.button("⚙️ 设置", use_container_width=True, type="primary" if page == 'settings' else "secondary"):
-            st.session_state['page'] = 'settings'
-            st.rerun()
+    # 导航 Tabs
+    tab_home, tab_exercises, tab_settings = st.tabs(["🏠 首页", "💪 动作池", "⚙️ 设置"])
     
-    # 页面路由
-    if page == 'home':
+    with tab_home:
         show_home_page(user)
-    elif page == 'exercises':
+    
+    with tab_exercises:
         show_exercises_page(user)
-    elif page == 'settings':
+    
+    with tab_settings:
         show_settings_page(user)

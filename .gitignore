@@ -57,3 +57,6 @@ htmlcov/
 # Temporary files
 *.tmp
 temp/
+
+# User data (local storage)
+stoic_leek_data.json
