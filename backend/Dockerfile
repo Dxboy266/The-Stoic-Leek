@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # 安装依赖
-RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.cloud.tencent.com/pypi/simple
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制当前目录内容到容器中
 COPY . .
