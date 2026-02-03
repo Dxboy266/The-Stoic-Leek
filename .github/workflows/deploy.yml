@@ -7,6 +7,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  # 强制使用小写
+  IMAGE_OWNER: dxboy266
 
 jobs:
   # ============ 构建并推送镜像 ============
@@ -33,14 +35,14 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/stoic-leek-backend:latest
+          tags: ghcr.io/${{ env.IMAGE_OWNER }}/stoic-leek-backend:latest
       
       - name: 🏗️ Build & Push Frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/stoic-leek-frontend:latest
+          tags: ghcr.io/${{ env.IMAGE_OWNER }}/stoic-leek-frontend:latest
           build-args: |
             NEXT_PUBLIC_API_URL=http://81.70.55.132:8000
 
