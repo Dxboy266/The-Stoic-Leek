@@ -5,3 +5,7 @@ export const PersistenceService = {
     load: () => api.get('/persistence/load') as Promise<{ data: any }>,
     save: (data: any) => api.post('/persistence/save', { data }),
 };
+
+// 直接导出的保存函数，方便使用
+export const savePersistence = (data: any) => PersistenceService.save(data);
+export const loadPersistence = () => PersistenceService.load();

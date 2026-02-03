@@ -33,7 +33,7 @@ export function MarketDashboard() {
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('请求超时')), 3000)
             );
-            const data = await Promise.race([MarketService.getNorthbound(), timeoutPromise]);
+            const data = await Promise.race([MarketService.getNorthbound(), timeoutPromise]) as any;
             setNorthbound(data);
             setUsingMockData(false);
         } catch (err: any) {
@@ -58,7 +58,7 @@ export function MarketDashboard() {
     const fetchSectors = useCallback(async () => {
         setLoadingSectors(true);
         try {
-            const data = await MarketService.getHotSectors();
+            const data = await MarketService.getHotSectors() as any;
             setSectors(data);
         } catch (err: any) {
             console.error('Failed to fetch sectors:', err);
@@ -88,7 +88,7 @@ export function MarketDashboard() {
         try {
             if (apiKey) {
                 // 真实调用
-                const data = await MarketService.getDailySummary({ api_key: apiKey });
+                const data = await MarketService.getDailySummary({ api_key: apiKey }) as any;
                 setSummary(data);
 
                 // 持久化保存
@@ -161,38 +161,39 @@ export function MarketDashboard() {
     }, []); // 真正的只执行一次
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-4 sm:space-y-8">
             {/* 头部操作栏 */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">市场雷达</h1>
-                    <p className="text-base text-gray-600 dark:text-gray-400">追踪聪明钱的动向，洞察市场机会</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2">市场雷达</h1>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">追踪聪明钱的动向，洞察市场机会</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
                     {usingMockData && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 dark:bg-orange-950">
+                        <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 dark:bg-orange-950 text-xs sm:text-sm">
                             <Database className="w-3 h-3 mr-1" />
-                            模拟数据
+                            模拟
                         </Badge>
                     )}
-                    <Button variant="outline" onClick={refreshAll} className="gap-2">
+                    <Button variant="outline" size="sm" onClick={refreshAll} className="gap-1.5 flex-1 sm:flex-none">
                         <RefreshCw className="w-4 h-4" />
-                        <span className="hidden sm:inline">刷新</span>
+                        <span>刷新</span>
                     </Button>
                     <Button
+                        size="sm"
                         onClick={generateSummary}
                         disabled={loadingSummary}
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md gap-2"
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md gap-1.5 flex-1 sm:flex-none text-xs sm:text-sm"
                     >
-                        {loadingSummary ? '生成中...' : '重新生成 AI 辣评'}
+                        {loadingSummary ? '生成中...' : 'AI 辣评'}
                     </Button>
                 </div>
             </div>
 
             {/* 主内容区 */}
-            <div className="grid gap-8 lg:grid-cols-3">
+            <div className="grid gap-4 sm:gap-8 lg:grid-cols-3">
                 {/* 左列：北向资金 + 情绪指数 */}
-                <div className="lg:col-span-1 space-y-8">
+                <div className="lg:col-span-1 space-y-4 sm:space-y-8">
                     <NorthboundCard data={northbound} isLoading={loadingNorthbound} />
 
                     {/* 情绪指数小卡片 */}

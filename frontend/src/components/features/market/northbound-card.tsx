@@ -51,14 +51,14 @@ export function NorthboundCard({ data, isLoading }: NorthboundCardProps) {
                 ? "bg-gradient-to-br from-red-50 via-rose-50 to-pink-100 dark:from-red-950 dark:to-rose-900"
                 : "bg-gradient-to-br from-green-50 via-emerald-50 to-teal-100 dark:from-green-950 dark:to-emerald-900"
         )}>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-1 sm:pb-2">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <CardTitle className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                         <div className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center",
+                            "w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center",
                             isPositive ? "bg-red-500/20" : "bg-green-500/20"
                         )}>
-                            <Icon className={cn("w-5 h-5", isPositive ? "text-red-600" : "text-green-600")} />
+                            <Icon className={cn("w-4 h-4 sm:w-5 sm:h-5", isPositive ? "text-red-600" : "text-green-600")} />
                         </div>
                         北向资金
                     </CardTitle>
@@ -69,38 +69,38 @@ export function NorthboundCard({ data, isLoading }: NorthboundCardProps) {
             </CardHeader>
             <CardContent className="pt-2">
                 {/* 总体净流入 */}
-                <div className="mb-6">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">当日净流入</p>
-                    <div className="flex items-end gap-2">
+                <div className="mb-4 sm:mb-6">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-0.5 sm:mb-1">当日净流入</p>
+                    <div className="flex items-end gap-1 sm:gap-2">
                         <span className={cn(
-                            "text-4xl font-bold tracking-tight",
+                            "text-2xl sm:text-4xl font-bold tracking-tight",
                             isPositive ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
                         )}>
                             {isPositive ? '+' : ''}{data.total_net.toFixed(2)}
                         </span>
-                        <span className="text-lg text-gray-500 mb-1">{data.unit}</span>
+                        <span className="text-sm sm:text-lg text-gray-500 mb-0.5 sm:mb-1">{data.unit}</span>
                         <ArrowIcon className={cn(
-                            "w-6 h-6 mb-1",
+                            "w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1",
                             isPositive ? "text-red-500" : "text-green-500"
                         )} />
                     </div>
                 </div>
 
                 {/* 分渠道数据 */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
-                        <p className="text-xs text-gray-500 mb-1">沪股通</p>
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                    <div className="p-2 sm:p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
+                        <p className="text-xs text-gray-500 mb-0.5 sm:mb-1">沪股通</p>
                         <p className={cn(
-                            "text-lg font-semibold",
+                            "text-base sm:text-lg font-semibold",
                             data.shanghai_net >= 0 ? "text-red-600" : "text-green-600"
                         )}>
                             {data.shanghai_net >= 0 ? '+' : ''}{data.shanghai_net.toFixed(2)}亿
                         </p>
                     </div>
-                    <div className="p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
-                        <p className="text-xs text-gray-500 mb-1">深股通</p>
+                    <div className="p-2 sm:p-3 rounded-lg bg-white/50 dark:bg-gray-800/50">
+                        <p className="text-xs text-gray-500 mb-0.5 sm:mb-1">深股通</p>
                         <p className={cn(
-                            "text-lg font-semibold",
+                            "text-base sm:text-lg font-semibold",
                             data.shenzhen_net >= 0 ? "text-red-600" : "text-green-600"
                         )}>
                             {data.shenzhen_net >= 0 ? '+' : ''}{data.shenzhen_net.toFixed(2)}亿

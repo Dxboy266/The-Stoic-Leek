@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Key, Dumbbell, RotateCcw } from 'lucide-react';
+import { Dumbbell, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { useUserStore } from '@/store/user';
 import { cn } from '@/lib/utils';
+import { AIConfigCard } from './ai-config-card';
+import { savePersistence } from '@/services/persistence';
 
 const EXERCISE_POOL = [
     "波比跳 (Burpees)",
@@ -70,56 +72,21 @@ export function SettingsPage() {
         toast.success(`已添加动作: ${value}`);
     };
 
+    // 保存设置
+    const handleSaveSettings = async () => {
+        // 数据会自动通过 Store 监听保存到 LocalStorage
+        toast.success('设置已保存');
+    };
+
     return (
-        <div className="space-y-8 max-w-2xl mx-auto">
+        <div className="space-y-6 sm:space-y-8 max-w-2xl mx-auto">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">设置</h1>
-                <p className="text-base text-gray-600 dark:text-gray-400">配置你的 AI 和战术偏好</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2">设置</h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">配置你的 AI 和战术偏好</p>
             </div>
 
-            {/* API Key 配置 - 编辑 .env 文件 */}
-            <Card className="border-0 shadow-lg">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-                            <Key className="w-5 h-5 text-white" />
-                        </div>
-                        SiliconFlow API Key
-                    </CardTitle>
-                    <CardDescription>
-                        用于生成 AI 毒舌建议和市场辣评。
-                        <a
-                            href="https://cloud.siliconflow.cn/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline ml-1"
-                        >
-                            点击获取免费 API Key →
-                        </a>
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-                            <strong>📁 配置方式</strong>：直接编辑后端配置文件
-                        </p>
-                        <div className="bg-white dark:bg-gray-900 p-3 rounded-md font-mono text-sm border">
-                            <p className="text-gray-500 mb-1"># 文件路径</p>
-                            <p className="text-blue-600">backend/.env</p>
-                            <p className="text-gray-500 mt-3 mb-1"># 添加或修改这一行</p>
-                            <p className="text-green-600">SILICONFLOW_API_KEY=sk-你的密钥</p>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-3">
-                            修改后需要重启后端服务 (重新运行 start_backend.bat)
-                        </p>
-                    </div>
-                    <div className="p-3 bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                            💡 没有 API Key 也能使用基础功能（盈亏对冲），但无法生成 AI 个性化建议和市场辣评。
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* AI 配置卡片 */}
+            <AIConfigCard onSave={handleSaveSettings} />
 
             {/* 动作池配置 */}
             <Card className="border-0 shadow-lg">
@@ -191,19 +158,15 @@ export function SettingsPage() {
                         数据存储
                     </CardTitle>
                     <CardDescription>
-                        所有数据都保存在本地文件，不上传任何服务器
+                        数据仅保存在你的浏览器 (LocalStorage)。不会上传到服务器，每个人数据互相独立。
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 border rounded-lg font-mono text-sm">
-                        <p className="text-gray-500 mb-1"># 用户数据文件</p>
-                        <p className="text-blue-600">backend/stoic_leek_data.json</p>
-                        <p className="text-gray-500 mt-3 mb-1"># API 密钥文件</p>
-                        <p className="text-blue-600">backend/.env</p>
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-200">
+                        <p>
+                            ⚠️ 注意：如果你清理浏览器缓存或更换浏览器，数据将会丢失。请妥善保管你的 AI Key。
+                        </p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-3">
-                        你可以直接编辑这些文件来修改数据。修改 .env 后需要重启后端。
-                    </p>
                 </CardContent>
             </Card>
         </div>

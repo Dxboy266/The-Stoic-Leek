@@ -142,4 +142,34 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400 dark:bg-gray-600;
   }
+
+  /* 移动端安全区域支持 */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* 移动端全局优化 */
+@media (max-width: 640px) {
+
+  /* 禁用移动端双击放大 */
+  html {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 优化滚动体验 */
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  /* 底部导航栏安全区域 */
+  .fixed.bottom-0 {
+    padding-bottom: env(safe-area-inset-bottom, 8px);
+  }
 }

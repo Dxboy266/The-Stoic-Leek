@@ -5,6 +5,7 @@ export interface Lesson {
     duration: string;
     isCompleted: boolean;
     isLocked: boolean;
+    icon?: string;
     content?: {
         // 通用
         text?: string;

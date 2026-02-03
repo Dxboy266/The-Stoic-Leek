@@ -11,7 +11,8 @@ from .routers import (
     prescription_router,
     market_router,
     persistence_router,
-    fund_router
+    fund_router,
+    ai_router
 )
 
 # 创建应用
@@ -36,7 +37,7 @@ Local-First 架构支持后端：仅提供 AI 调用和市场数据代理，不�
 settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS + ["*"],  
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,6 +48,7 @@ app.include_router(prescription_router)
 app.include_router(market_router)
 app.include_router(persistence_router)
 app.include_router(fund_router)
+app.include_router(ai_router)
 
 
 # 根路由

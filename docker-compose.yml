@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: stoic_leek_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    # 挂载数据卷以持久化数据（视情况而定，这里挂载整个app方便调试，生产环境建议只挂载数据目录）
+    # volumes:
+    #   - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # 注意：这里需要填服务器的公网 IP，因为是浏览器端访问
+        NEXT_PUBLIC_API_URL: http://81.70.55.132:8000
+    container_name: stoic_leek_frontend
+    restart: always
+    ports:
+      - "3001:3000"
+    depends_on:
+      - backend

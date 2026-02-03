@@ -27,19 +27,31 @@ export function useFundRealtime() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetch = useCallback(async (code: string) => {
-        if (!code || code.length !== 6) {
-            setError('请输入6位基金代码');
-            return;
-        }
+    // 搜索基金 (支持名称)
+    const search = useCallback(async (query: string) => {
+        if (!query) return;
 
         setLoading(true);
         setError(null);
 
         try {
-            // api 拦截器已返回 response.data
-            const result = await api.get(`/fund/${code}`);
-            setData(result as unknown as FundRealtime);
+            // 如果是6位数字，直接按代码查详情
+            if (/^\d{6}$/.test(query)) {
+                const result = await api.get(`/fund/${query}`);
+                setData(result as unknown as FundRealtime);
+            } else {
+                // 否则按名称搜索，取第一个结果并获取详情
+                const results = await api.get(`/fund/search/query?q=${query}`) as unknown as { code: string }[];
+                if (results && results.length > 0) {
+                    const firstCode = results[0].code;
+                    // 获取详情
+                    const result = await api.get(`/fund/${firstCode}`);
+                    setData(result as unknown as FundRealtime);
+                } else {
+                    setError('未找到相关基金');
+                    setData(null);
+                }
+            }
         } catch (err: any) {
             const message = err.detail || err.message || '获取失败';
             setError(message);
@@ -54,8 +66,11 @@ export function useFundRealtime() {
         setError(null);
     }, []);
 
-    return { data, loading, error, fetch, reset };
+    const fetch = search; // 别名兼容旧代码
+
+    return { data, loading, error, fetch, search, reset };
 }
+
 
 // 批量获取基金数据
 export async function batchFetchFunds(codes: string[]): Promise<FundRealtime[]> {

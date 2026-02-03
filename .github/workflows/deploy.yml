@@ -1,0 +1,96 @@
+name: 🚀 Build & Deploy
+
+on:
+  push:
+    branches: [2.0, main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # ============ 构建并推送镜像 ============
+  build:
+    name: 🔨 Build Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔐 Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🏗️ Build & Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/stoic-leek-backend:latest
+      
+      - name: 🏗️ Build & Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/stoic-leek-frontend:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://81.70.55.132:8000
+
+  # ============ 部署到服务器 ============
+  deploy:
+    name: 🖥️ Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: 🚀 Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/stoic-leek
+            
+            # 写入 docker-compose.yml
+            cat > docker-compose.yml << 'COMPOSE'
+            version: '3.8'
+            services:
+              backend:
+                image: ghcr.io/dxboy266/stoic-leek-backend:latest
+                container_name: stoic-leek-backend
+                ports:
+                  - "8000:8000"
+                volumes:
+                  - ./data:/app/data
+                  - ./.env:/app/.env
+                restart: unless-stopped
+            
+              frontend:
+                image: ghcr.io/dxboy266/stoic-leek-frontend:latest
+                container_name: stoic-leek-frontend
+                ports:
+                  - "3001:3000"
+                depends_on:
+                  - backend
+                restart: unless-stopped
+            COMPOSE
+            
+            # 登录镜像仓库
+            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u dxboy266 --password-stdin
+            
+            # 拉取并重启
+            docker-compose pull
+            docker-compose up -d --remove-orphans
+            docker image prune -f
+            
+            echo "✅ 部署完成！"
+            docker-compose ps

@@ -18,38 +18,37 @@ export default function HomePage() {
   const { settings, updateSettings, isLoaded, setLoaded } = useUserStore();
   const [landingVisible, setLandingVisible] = useState(true);
 
-  // 从后端 JSON 文件加载数据 (只执行一次)
+  // 从 LocalStorage 加载数据 (只执行一次)
   useEffect(() => {
-    if (isLoaded) return; // 已加载过，跳过
+    if (isLoaded) return;
 
-    import('@/services/persistence').then(mod => {
-      const PersistenceService = mod.PersistenceService;
-      PersistenceService.load().then(res => {
-        if (res.data && Object.keys(res.data).length > 0) {
-          updateSettings(res.data);
-          console.log("✅ 从后端 JSON 加载数据:", res.data);
-        }
-        setLoaded(true);
-      }).catch(err => {
-        console.log("⚠️ 后端加载跳过 (可能后端未启动):", err);
-        setLoaded(true); // 即使失败也标记为已加载
-      });
-    });
+    // 优先尝试从 LocalStorage 读取
+    const localData = localStorage.getItem('stoic_leek_data');
+    if (localData) {
+      try {
+        const parsed = JSON.parse(localData);
+        updateSettings(parsed);
+        console.log("✅ 从 LocalStorage 加载数据:", parsed);
+      } catch (e) {
+        console.error("解析本地数据失败", e);
+      }
+    }
+
+    // 标记加载完成
+    setLoaded(true);
   }, [isLoaded, setLoaded, updateSettings]);
 
-  // 数据变化时自动保存到后端 JSON 文件 (2秒防抖)
+  // 数据变化时保存到 LocalStorage (Web 版独立数据)
   useEffect(() => {
     if (!isLoaded) return; // 首次加载未完成时不保存
     if (Object.keys(settings).length === 0) return; // 空数据不保存
 
-    const timer = setTimeout(() => {
-      import('@/services/persistence').then(mod => {
-        mod.PersistenceService.save(settings)
-          .then(() => console.log("💾 数据已保存到后端 JSON"))
-          .catch(e => console.error("❌ 保存失败:", e));
-      });
-    }, 2000);
-    return () => clearTimeout(timer);
+    try {
+      localStorage.setItem('stoic_leek_data', JSON.stringify(settings));
+      console.log("💾 数据已保存到 LocalStorage");
+    } catch (e) {
+      console.error("❌ LocalStorage 保存失败:", e);
+    }
   }, [settings, isLoaded]);
 
   if (landingVisible) {
@@ -79,34 +78,35 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen pb-20 sm:pb-12 px-3 sm:px-6 lg:px-8">
       <Navbar />
 
-      <Tabs defaultValue="fund" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 lg:w-[700px] mx-auto p-1 bg-white/50 backdrop-blur rounded-xl">
-          <TabsTrigger value="fund" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">基金</span>
+      <Tabs defaultValue="fund" className="space-y-4 sm:space-y-6">
+        {/* 移动端底部固定导航 / PC端顶部导航 */}
+        <TabsList className="fixed bottom-0 left-0 right-0 z-50 grid w-full grid-cols-5 p-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-t border-gray-200 dark:border-gray-800 sm:static sm:border-0 sm:w-auto sm:max-w-[600px] sm:mx-auto sm:rounded-xl sm:bg-white/50">
+          <TabsTrigger value="fund" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-2 rounded-lg text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TrendingUp className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span>基金</span>
           </TabsTrigger>
-          <TabsTrigger value="market" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <CandlestickChart className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">市场</span>
+          <TabsTrigger value="market" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-2 rounded-lg text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <CandlestickChart className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span>市场</span>
           </TabsTrigger>
-          <TabsTrigger value="prescription" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Activity className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">对冲</span>
+          <TabsTrigger value="prescription" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-2 rounded-lg text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <Activity className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span>对冲</span>
           </TabsTrigger>
-          <TabsTrigger value="academy" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <GraduationCap className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">学院</span>
+          <TabsTrigger value="academy" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-2 rounded-lg text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <GraduationCap className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span>学院</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Settings className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">设置</span>
+          <TabsTrigger value="settings" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-2 rounded-lg text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <Settings className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span>设置</span>
           </TabsTrigger>
         </TabsList>
 
-        <div className="mt-8 animate-in fade-in duration-500">
+        <div className="mt-2 sm:mt-8 animate-in fade-in duration-500">
           <TabsContent value="fund">
             <FundDashboard />
           </TabsContent>

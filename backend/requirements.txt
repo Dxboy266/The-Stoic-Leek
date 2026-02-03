@@ -5,6 +5,7 @@ python-multipart>=0.0.18
 
 # 数据处理 & AI
 httpx>=0.28.0
+aiohttp>=3.9.0
 pydantic>=2.10.0
 email-validator>=2.0.0
 pydantic-settings>=2.6.0
@@ -20,6 +21,11 @@ qrcode>=8.0
 # 金融数据
 akshare>=1.16.0
 apscheduler>=3.10.0  # 定时任务
+
+# OCR 文字识别 (已废弃 PaddleOCR，改用 AI 视觉)
+# paddleocr>=3.0.0
+# paddlepaddle>=3.0.0
+openai>=1.0.0
 
 # 配置
 pyyaml>=6.0.0

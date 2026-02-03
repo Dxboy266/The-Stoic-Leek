@@ -154,7 +154,7 @@ export function PrescriptionGenerator() {
     };
 
     return (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
             {/* 左侧：输入区 */}
             <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-md dark:bg-gray-900/50">
                 <CardHeader>
@@ -263,7 +263,7 @@ export function PrescriptionGenerator() {
                         {/* 截图区域 */}
                         <div
                             ref={resultRef}
-                            className="space-y-6 p-8 rounded-2xl bg-white shadow-xl border border-gray-100"
+                            className="space-y-4 sm:space-y-6 p-4 sm:p-8 rounded-2xl bg-white shadow-xl border border-gray-100"
                             style={{ position: 'relative' }}
                         >
                             {/* 水印/Logo */}
@@ -276,22 +276,22 @@ export function PrescriptionGenerator() {
                             </div>
 
                             {/* 数据卡片 */}
-                            <div className="grid grid-cols-3 gap-4">
-                                <Card className="bg-gray-50 border-0 flex flex-col items-center justify-center p-4">
-                                    <div className={`text-2xl font-bold flex items-center justify-center gap-0.5 ${result.amount >= 0 ? 'text-red-500' : 'text-green-500'}`}>
+                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                                <Card className="bg-gray-50 border-0 flex flex-col items-center justify-center p-2 sm:p-4">
+                                    <div className={`text-lg sm:text-2xl font-bold flex items-center justify-center gap-0.5 ${result.amount >= 0 ? 'text-red-500' : 'text-green-500'}`}>
                                         {result.amount > 0 && <span>+</span>}
                                         <span>{formatCurrency(result.amount)}</span>
                                     </div>
                                     <div className="text-xs text-gray-500 mt-1">今日盈亏</div>
                                 </Card>
-                                <Card className="bg-gray-50 border-0 flex flex-col items-center justify-center p-4">
-                                    <div className={`text-2xl font-bold ${result.roi >= 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                <Card className="bg-gray-50 border-0 flex flex-col items-center justify-center p-2 sm:p-4">
+                                    <div className={`text-lg sm:text-2xl font-bold ${result.roi >= 0 ? 'text-red-500' : 'text-green-500'}`}>
                                         {formatPercent(result.roi)}
                                     </div>
                                     <div className="text-xs text-gray-500 mt-1">收益率</div>
                                 </Card>
-                                <Card className="bg-gray-50 border-0 flex flex-col items-center justify-center p-4">
-                                    <div className="text-xl font-bold text-blue-600">{result.mood}</div>
+                                <Card className="bg-gray-50 border-0 flex flex-col items-center justify-center p-2 sm:p-4">
+                                    <div className="text-base sm:text-xl font-bold text-blue-600">{result.mood}</div>
                                     <div className="text-xs text-gray-500 mt-1">AI 诊断</div>
                                 </Card>
                             </div>

@@ -46,7 +46,7 @@ export function AuthForm() {
     async function onLogin(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         try {
-            const res = await AuthService.login(values);
+            const res = await AuthService.login(values) as any;
             setAuth(res.user, res.access_token);
             toast.success('登录成功');
             router.push('/');
